@@ -1,0 +1,39 @@
+from django.contrib.auth.models import BaseUserManager
+
+
+class UserManager(BaseUserManager):
+    """
+    Custom manager to handle user creation logic.
+
+    Methods:
+        create_user: Handles standard user registration with a compulsory password and email.
+        create_superuser: Handles admin account creation with all permission flags.
+    """
+
+    def create_user(self, email, name, phone_number, password):
+        if not email:
+            raise ValueError("Users must have an email address")
+        if not password:
+            raise ValueError("Password is compulsory")
+
+        user = self.model(
+            email=self.normalize_email(email),
+            name=name,
+            phone_number=phone_number,
+        )
+
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, name, phone_number, password):
+        user = self.create_user(
+            email,
+            password,
+            name,
+            phone_number,
+        )
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        return user
