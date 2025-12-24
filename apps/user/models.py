@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
-from .managers import UserManager
+from apps.user import managers as user_manager
 
 # Validator to ensure the phone number is exactly 10 digits
 phone_number_validator = RegexValidator(
@@ -32,10 +32,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    objects = UserManager()
+    objects = user_manager.UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["password"]
+    REQUIRED_FIELDS = ["name", "phone_number"]
 
     def __str__(self):
-        return self.name
+        return self.email

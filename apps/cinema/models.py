@@ -3,12 +3,13 @@ from django.core.validators import MinValueValidator
 
 
 class City(models.Model):
-    '''
-        Represents a city in which the cinema is located.
+    """
+    Represents a city in which the cinema is located.
 
-        Attributes:
-            name (str) : The name of the city.
-    '''
+    Attributes:
+        name (str) : The name of the city.
+    """
+
     name = models.CharField(max_length=50)
 
     def __str__(self):
@@ -16,16 +17,17 @@ class City(models.Model):
 
 
 class Cinema(models.Model):
-    '''
-        Represents a cinema hall within a specific city.
+    """
+    Represents a cinema hall within a specific city.
 
-        Attributes:
-            name (str) : The name of the cinema.
-            address (str) : The physical address of the cinema.
-            city (Foreign Key) : References to the City where the cinema is located.
-            rows (int) : The total number of rows in the cinema hall.
-            seats_per_row (int) : The number of seat available in each row.
-    '''
+    Attributes:
+        name (str) : The name of the cinema.
+        address (str) : The physical address of the cinema.
+        city (Foreign Key) : References to the City where the cinema is located.
+        rows (int) : The total number of rows in the cinema hall.
+        seats_per_row (int) : The number of seat available in each row.
+    """
+
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=70)
     city = models.ForeignKey(City, on_delete=models.CASCADE)

@@ -2,12 +2,13 @@ from django.db import models
 
 
 class Genre(models.Model):
-    '''
-        Represents a movie category.
+    """
+    Represents a movie category.
 
-        Attributes:
-            name (str) : The name of the genre (e.g., Action, Horror).
-    '''
+    Attributes:
+        name (str) : The name of the genre (e.g., Action, Horror).
+    """
+
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
@@ -15,12 +16,13 @@ class Genre(models.Model):
 
 
 class Language(models.Model):
-    '''
-        Represents the language of the movie content.
+    """
+    Represents the language of the movie content.
 
-        Attributes:
-            name (str) : The name of the language (e.g., English, Hindi).
-    '''
+    Attributes:
+        name (str) : The name of the language (e.g., English, Hindi).
+    """
+
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
@@ -28,7 +30,7 @@ class Language(models.Model):
 
 
 class Movie(models.Model):
-    '''
+    """
         Represents a cinematic film available for booking.
 
     Attributes:
@@ -38,12 +40,13 @@ class Movie(models.Model):
         release_date (date) : The official date the movie was released.
         generes (ManyToManyField) : The genres associated with the movie.
         language (ForeignKey) : The primary language of the movie.
-    '''
+    """
+
     name = models.CharField(max_length=50)
     description = models.TextField()
     duration = models.DurationField()
     release_date = models.DateField()
-    generes = models.ManyToManyField(Genre)
+    genres = models.ManyToManyField(Genre)
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
 
     def __str__(self):

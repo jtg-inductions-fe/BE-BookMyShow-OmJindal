@@ -10,29 +10,20 @@ class UserManager(BaseUserManager):
         create_superuser: Handles admin account creation with all permission flags.
     """
 
-    def create_user(self, email, name, phone_number, password):
+    def create_user(self, email, password, **kwargs):
         if not email:
             raise ValueError("Users must have an email address")
         if not password:
             raise ValueError("Password is compulsory")
 
-        user = self.model(
-            email=self.normalize_email(email),
-            name=name,
-            phone_number=phone_number,
-        )
+        user = self.model(email=self.normalize_email(email), **kwargs)
 
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, email, name, phone_number, password):
-        user = self.create_user(
-            email,
-            password,
-            name,
-            phone_number,
-        )
+    def create_superuser(self, email, password, **kwargs):
+        user = self.create_user(email=email, password=password, **kwargs)
         user.is_staff = True
         user.is_superuser = True
         user.save()
