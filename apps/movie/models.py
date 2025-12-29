@@ -42,12 +42,12 @@ class Movie(models.Model):
         language (ForeignKey) : The primary language of the movie.
     """
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=125, unique=True)
     description = models.TextField()
     duration = models.DurationField()
     release_date = models.DateField()
-    genres = models.ManyToManyField(Genre)
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    genres = models.ManyToManyField(Genre, related_name="movies_by_genre")
+    language = models.ManyToManyField(Language, related_name="movies_by_language")
 
     def __str__(self):
         return self.name

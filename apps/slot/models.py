@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 
 from apps.movie.models import Movie
 from apps.cinema.models import Cinema
@@ -18,20 +18,39 @@ class Slot(models.Model):
         cinema (ForeignKey) : The cinema hall where the movie is screened.
     """
 
-    price = models.IntegerField(validators=[MinValueValidator(1)])
+    price = models.PositiveIntegerField()
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    cinema = models.ForeignKey(Cinema, on_delete=models.CASCADE)
+    movie = models.ForeignKey(
+        Movie, on_delete=models.CASCADE, related_name="slots_by_movie"
+    )
+    cinema = models.ForeignKey(
+        Cinema, on_delete=models.CASCADE, related_name="slots_by_cinema"
+    )
 
     def __str__(self):
         return f"Slot of {self.movie} in {self.cinema} between {self.start_time} and {self.end_time}"
 
     def clean(self):
-        from django.core.exceptions import ValidationError
+        overlapping_slots = Slot.objects.filter(
+            movie=self.movie,
+            cinema=self.cinema,
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time,
+        )
 
-        if self.end_time and self.start_time and self.end_time <= self.start_time:
-            raise ValidationError("End time must be after start time.")
+        if overlapping_slots.exists():
+            raise ValidationError(
+                "This slot overlaps with an existing slot for the same movie in this cinema."
+            )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(end_time__gt=models.F("start_time")),
+                name="slot_end_after_start",
+            )
+        ]
 
 
 class Booking(models.Model):
@@ -45,15 +64,26 @@ class Booking(models.Model):
     """
 
     class BookingStatus(models.TextChoices):
-        CONFIRMED = "CO", ("CONFIRMED")
-        CANCELLED = "CA", ("CANCELLED")
+        CONFIRMED = "CONFIRMED", ("Confirmed")
+        CANCELLED = "CANCELLED", ("Cancelled")
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    slot = models.ForeignKey(Slot, on_delete=models.CASCADE)
-    status = models.CharField(max_length=2, choices=BookingStatus.choices)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="bookings_by_user"
+    )
+    slot = models.ForeignKey(
+        Slot, on_delete=models.CASCADE, related_name="bookings_by_slot"
+    )
+    status = models.CharField(max_length=20, choices=BookingStatus.choices)
 
     def __str__(self):
         return f"Booking of {self.user} for {self.slot}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "slot"], name="unique_booking_per_user_and_slot"
+            )
+        ]
 
 
 class Ticket(models.Model):
@@ -66,16 +96,16 @@ class Ticket(models.Model):
         booking (ForeignKey) : The booking to which this ticket belongs.
     """
 
-    seat_row = models.IntegerField(validators=[MinValueValidator(1)])
-    seat_column = models.IntegerField(validators=[MinValueValidator(1)])
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
+    seat_row = models.PositiveSmallIntegerField()
+    seat_column = models.PositiveSmallIntegerField()
+    booking = models.ForeignKey(
+        Booking, on_delete=models.CASCADE, related_name="tickets_by_booking"
+    )
 
     def __str__(self):
         return f"Ticket of {self.booking} for seat {self.seat_row}-{self.seat_column}"
 
     def clean(self):
-        from django.core.exceptions import ValidationError
-
         cinema = self.booking.slot.cinema
         if self.seat_row > cinema.rows:
             raise ValidationError(
@@ -85,3 +115,11 @@ class Ticket(models.Model):
             raise ValidationError(
                 f"Seat column {self.seat_column} exceeds cinema capacity of {cinema.seats_per_row} seats per row."
             )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["seat_row", "seat_column", "booking"],
+                name="unique_seat_per_booking",
+            )
+        ]

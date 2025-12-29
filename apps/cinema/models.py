@@ -10,7 +10,7 @@ class City(models.Model):
         name (str) : The name of the city.
     """
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
@@ -29,10 +29,19 @@ class Cinema(models.Model):
     """
 
     name = models.CharField(max_length=50)
-    address = models.CharField(max_length=70)
-    city = models.ForeignKey(City, on_delete=models.CASCADE)
-    rows = models.IntegerField(validators=[MinValueValidator(1)])
-    seats_per_row = models.IntegerField(validators=[MinValueValidator(1)])
+    address = models.TextField()
+    city = models.ForeignKey(
+        City, on_delete=models.CASCADE, related_name="cinemas_by_city"
+    )
+    rows = models.PositiveSmallIntegerField()
+    seats_per_row = models.PositiveSmallIntegerField()
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "address"], name="unique_cinema_at_each_address"
+            )
+        ]
