@@ -32,7 +32,7 @@ class Slot(models.Model):
         return f"Slot of {self.movie} in {self.cinema} between {self.start_time} and {self.end_time}"
 
     def clean(self):
-        overlapping_slots = Slot.objects.filter(
+        overlapping_slots = Slot.objects.exclude(pk=self.pk).filter(
             movie=self.movie,
             cinema=self.cinema,
             start_time__lt=self.end_time,
@@ -73,7 +73,7 @@ class Booking(models.Model):
     slot = models.ForeignKey(
         Slot, on_delete=models.CASCADE, related_name="bookings_by_slot"
     )
-    status = models.CharField(max_length=20, choices=BookingStatus.choices)
+    status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.CONFIRMED)
 
     def __str__(self):
         return f"Booking of {self.user} for {self.slot}"
