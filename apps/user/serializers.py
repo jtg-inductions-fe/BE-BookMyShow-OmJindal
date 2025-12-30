@@ -11,13 +11,13 @@ class SignUpSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "name", "email", "phone_number", "password"]
 
-        def create(self, validated_data):
-            return User.create_user(
-                email=validated_data["email"],
-                password=validated_data["password"],
-                name=validated_data["name"],
-                phone_number=validated_data["phone_number"],
-            )
+    def create(self, validated_data):
+        return User.objects.create_user(
+            email=validated_data["email"],
+            password=validated_data["password"],
+            name=validated_data["name"],
+            phone_number=validated_data["phone_number"],
+        )
 
 
 class LoginSerializer(serializers.Serializer):
@@ -40,10 +40,10 @@ class LoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = {"id", "name", "email", "phone_number"}
+        fields = ["id", "name", "email", "phone_number"]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = {"name", "phone_number"}
+        fields = ["name", "phone_number"]
