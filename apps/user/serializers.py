@@ -1,10 +1,18 @@
-from rest_framework import serializers
 from django.contrib.auth import authenticate, get_user_model
+from rest_framework import serializers
 
 User = get_user_model()
 
 
 class SignUpSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user registration.
+
+    Handles validation and creation of a new user account.
+    The password field is write-only and is properly hashed
+    using Django's `create_user` method.
+    """
+
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -21,6 +29,13 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    """
+    Serializer for user login.
+
+    Validates user credentials using Django's authentication
+    system and returns the authenticated user instance.
+    """
+
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
@@ -38,12 +53,26 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for retrieving user profile information.
+
+    Used to return non-sensitive user details such as
+    name, email, and phone number.
+    """
+
     class Meta:
         model = User
         fields = ["id", "name", "email", "phone_number"]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating user profile details.
+
+    Allows partial updates to user attributes such as
+    name and phone number.
+    """
+
     class Meta:
         model = User
         fields = ["name", "phone_number"]

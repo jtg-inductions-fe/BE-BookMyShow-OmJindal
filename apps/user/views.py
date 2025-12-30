@@ -14,6 +14,16 @@ from apps.user.serializers import (
 
 
 class SignupView(APIView):
+    """
+    API view to handle user registration.
+
+    This view validates user signup data, creates a new user,
+    generates JWT access and refresh tokens, and returns the
+    access token along with user profile details.
+
+    The refresh token is stored securely in an HTTP-only cookie.
+    """
+
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -42,6 +52,15 @@ class SignupView(APIView):
 
 
 class LoginView(APIView):
+    """
+    API view to handle user authentication (login).
+
+    This view validates user credentials, generates JWT tokens,
+    and returns an access token with user profile information.
+
+    The refresh token is stored in an HTTP-only cookie.
+    """
+
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -71,6 +90,12 @@ class LoginView(APIView):
 
 
 class ProfileView(APIView):
+    """
+    API view to retrieve the authenticated user's profile.
+
+    Access is restricted to authenticated users only.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -79,6 +104,12 @@ class ProfileView(APIView):
 
 
 class ProfileUpdateView(APIView):
+    """
+    API view to update the authenticated user's profile.
+
+    Supports partial updates using PATCH method.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
@@ -98,6 +129,13 @@ class ProfileUpdateView(APIView):
 
 
 class LogoutView(APIView):
+    """
+    API view to handle user logout.
+
+    This view removes the refresh token stored in cookies,
+    effectively logging the user out.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
