@@ -14,6 +14,8 @@ from apps.user.serializers import (
 
 from apps.user.models import User
 
+from apps.user.utils import generate_refresh_token, set_refresh_cookie
+
 
 class SignupView(APIView):
     """
@@ -31,25 +33,18 @@ class SignupView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        refresh = RefreshToken.for_user(user)
+        tokens = generate_refresh_token(user)
 
         response = Response(
             {
                 "message": "Signup successfully",
-                "access": str(refresh.access_token),
+                "access": str(tokens["access"]),
                 "user": UserProfileSerializer(user).data,
             },
             status=status.HTTP_201_CREATED,
         )
 
-        response.set_cookie(
-            key="refresh",
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            value=str(refresh),
-        )
-
+        set_refresh_cookie(response, tokens["refresh"])
         return response
 
 
@@ -69,25 +64,18 @@ class LoginView(APIView):
 
         user = serializer.validated_data["user"]
 
-        refresh = RefreshToken.for_user(user)
+        tokens = generate_refresh_token(user)
 
         response = Response(
             {
                 "message": "Login successfully",
-                "access": str(refresh.access_token),
+                "access": str(tokens["access"]),
                 "user": UserProfileSerializer(user).data,
             },
             status=status.HTTP_200_OK,
         )
 
-        response.set_cookie(
-            key="refresh",
-            httponly=True,
-            secure=True,
-            samesite="strict",
-            value=str(refresh),
-        )
-
+        set_refresh_cookie(response, tokens["refresh"])
         return response
 
 
@@ -132,25 +120,20 @@ class LogoutView(APIView):
 
     def post(self, request):
         refresh_token = request.COOKIES.get("refresh")
-        if not refresh_token:
-            return Response(
-                {"error": "No token found"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
 
-            response = Response(
-                {"message": "Logged out successfully"}, status=status.HTTP_200_OK
-            )
-            response.delete_cookie("refresh_token")
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
 
-            return response
-        except TokenError as e:
-            return Response(
-                {"error": "Token expired or invalid"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+        response = Response(
+            {"message": "Logged out successfully"},
+            status=status.HTTP_200_OK,
+        )
+        response.delete_cookie("refresh")
+        return response
 
 
 class CookieTokenRefreshView(APIView):
@@ -177,23 +160,16 @@ class CookieTokenRefreshView(APIView):
 
             refresh.blacklist()
 
-            new_refresh = RefreshToken.for_user(user)
+            tokens = generate_refresh_token(user)
 
             response = Response(
                 {
-                    "access": str(new_refresh.access_token),
+                    "access": str(tokens["access"]),
                 },
                 status=status.HTTP_200_OK,
             )
 
-            response.set_cookie(
-                key="refresh",
-                httponly=True,
-                secure=True,
-                samesite="strict",
-                value=str(new_refresh),
-            )
-
+            set_refresh_cookie(response, tokens["refresh"])
             return response
 
         except TokenError as e:
