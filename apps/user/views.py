@@ -1,9 +1,9 @@
-from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from apps.user.serializers import (
     SignUpSerializer,
@@ -11,6 +11,8 @@ from apps.user.serializers import (
     LoginSerializer,
     ProfileUpdateSerializer,
 )
+
+from apps.user.models import User
 
 
 class SignupView(APIView):
@@ -91,7 +93,7 @@ class LoginView(APIView):
 
 class ProfileView(APIView):
     """
-    API view to retrieve the authenticated user's profile.
+    API view to retrieve and update the authenticated user's profile.
 
     Access is restricted to authenticated users only.
     """
@@ -101,16 +103,6 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data)
-
-
-class ProfileUpdateView(APIView):
-    """
-    API view to update the authenticated user's profile.
-
-    Supports partial updates using PATCH method.
-    """
-
-    permission_classes = [IsAuthenticated]
 
     def patch(self, request):
         serializer = ProfileUpdateSerializer(
@@ -139,8 +131,73 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        response = Response(
-            {"message": "Logged out successfully"}, status=status.HTTP_200_OK
-        )
-        response.delete_cookie("refresh")
-        return response
+        refresh_token = request.COOKIES.get("refresh")
+        if not refresh_token:
+            return Response(
+                {"error": "No token found"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            response = Response(
+                {"message": "Logged out successfully"}, status=status.HTTP_200_OK
+            )
+            response.delete_cookie("refresh_token")
+
+            return response
+        except TokenError as e:
+            return Response(
+                {"error": "Token expired or invalid"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+
+class CookieTokenRefreshView(APIView):
+    """
+    API view to generate new access and refresh token.
+
+    It also blacklist the previous refresh token.
+    """
+
+    def post(self, request):
+        old_refresh_token = request.COOKIES.get("refresh")
+
+        if not old_refresh_token:
+            return Response(
+                {"error": "Refresh token not found"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            refresh = RefreshToken(old_refresh_token)
+
+            user_id = refresh["user_id"]
+            user = User.objects.get(id=user_id)
+
+            refresh.blacklist()
+
+            new_refresh = RefreshToken.for_user(user)
+
+            response = Response(
+                {
+                    "access": str(new_refresh.access_token),
+                },
+                status=status.HTTP_200_OK,
+            )
+
+            response.set_cookie(
+                key="refresh",
+                httponly=True,
+                secure=True,
+                samesite="strict",
+                value=str(new_refresh),
+            )
+
+            return response
+
+        except TokenError as e:
+            return Response(
+                {"error": "Token expired or invalid"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )

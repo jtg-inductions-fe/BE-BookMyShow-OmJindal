@@ -13,11 +13,10 @@ class SignUpSerializer(serializers.ModelSerializer):
     using Django's `create_user` method.
     """
 
-    password = serializers.CharField(write_only=True)
-
     class Meta:
         model = User
         fields = ["id", "name", "email", "phone_number", "password"]
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
         return User.objects.create_user(
@@ -62,7 +61,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "name", "email", "phone_number"]
+        fields = ["name", "email", "phone_number"]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
