@@ -21,7 +21,7 @@ class Movie(TimeStampedModel):
     duration = models.DurationField()
     release_date = models.DateField()
     genres = models.ManyToManyField(Genre, related_name="movies_by_genre")
-    language = models.ManyToManyField(Language, related_name="movies_by_language")
+    languages = models.ManyToManyField(Language, related_name="movies_by_language")
     poster = models.CharField(max_length=255)
 
     def __str__(self):
