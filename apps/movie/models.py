@@ -1,35 +1,9 @@
 from django.db import models
 
-
-class Genre(models.Model):
-    """
-    Represents a movie category.
-
-    Attributes:
-        name (str) : The name of the genre (e.g., Action, Horror).
-    """
-
-    name = models.CharField(max_length=50, unique=True)
-
-    def __str__(self):
-        return self.name
+from apps.base.models import Genre, Language, TimeStampedModel
 
 
-class Language(models.Model):
-    """
-    Represents the language of the movie content.
-
-    Attributes:
-        name (str) : The name of the language (e.g., English, Hindi).
-    """
-
-    name = models.CharField(max_length=50, unique=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Movie(models.Model):
+class Movie(TimeStampedModel):
     """
         Represents a cinematic film available for booking.
 
@@ -48,6 +22,7 @@ class Movie(models.Model):
     release_date = models.DateField()
     genres = models.ManyToManyField(Genre, related_name="movies_by_genre")
     language = models.ManyToManyField(Language, related_name="movies_by_language")
+    poster = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name

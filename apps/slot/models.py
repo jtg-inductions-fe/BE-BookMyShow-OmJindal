@@ -4,9 +4,10 @@ from django.core.exceptions import ValidationError
 from apps.movie.models import Movie
 from apps.cinema.models import Cinema
 from apps.user.models import User
+from apps.base.models import TimeStampedModel
 
 
-class Slot(models.Model):
+class Slot(TimeStampedModel):
     """
     Represents a specific movie screening time in a cinema hall.
 
@@ -49,11 +50,15 @@ class Slot(models.Model):
             models.CheckConstraint(
                 check=models.Q(end_time__gt=models.F("start_time")),
                 name="slot_end_after_start",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["movie", "cinema", "start_time"],
+                name="unique_slot_per_cinema_and_movie",
+            ),
         ]
 
 
-class Booking(models.Model):
+class Booking(TimeStampedModel):
     """
     Represents a reservation made by a user for a specific movie slot.
 
@@ -73,7 +78,9 @@ class Booking(models.Model):
     slot = models.ForeignKey(
         Slot, on_delete=models.CASCADE, related_name="bookings_by_slot"
     )
-    status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.CONFIRMED)
+    status = models.CharField(
+        max_length=20, choices=BookingStatus.choices, default=BookingStatus.CONFIRMED
+    )
 
     def __str__(self):
         return f"Booking of {self.user} for {self.slot}"
@@ -86,7 +93,7 @@ class Booking(models.Model):
         ]
 
 
-class Ticket(models.Model):
+class Ticket(TimeStampedModel):
     """
     Represents an individual seat reserved under a booking.
 

@@ -1,21 +1,9 @@
 from django.db import models
 
-
-class City(models.Model):
-    """
-    Represents a city in which the cinema is located.
-
-    Attributes:
-        name (str) : The name of the city.
-    """
-
-    name = models.CharField(max_length=50, unique=True)
-
-    def __str__(self):
-        return self.name
+from apps.base.models import City, TimeStampedModel
 
 
-class Cinema(models.Model):
+class Cinema(TimeStampedModel):
     """
     Represents a cinema hall within a specific city.
 
@@ -29,11 +17,10 @@ class Cinema(models.Model):
 
     name = models.CharField(max_length=50)
     address = models.TextField()
-    city = models.ForeignKey(
-        City, on_delete=models.CASCADE, related_name="cinemas_by_city"
-    )
+    city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="cinemas")
     rows = models.PositiveSmallIntegerField()
     seats_per_row = models.PositiveSmallIntegerField()
+    image = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name

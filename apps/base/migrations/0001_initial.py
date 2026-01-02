@@ -12,33 +12,39 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Booking',
+            name='City',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('status', models.CharField(choices=[('CONFIRMED', 'Confirmed'), ('CANCELLED', 'Cancelled')], default='CONFIRMED', max_length=20)),
+                ('name', models.CharField(max_length=50, unique=True)),
             ],
+            options={
+                'abstract': False,
+            },
         ),
         migrations.CreateModel(
-            name='Slot',
+            name='Genre',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('price', models.PositiveIntegerField()),
-                ('start_time', models.DateTimeField()),
-                ('end_time', models.DateTimeField()),
+                ('name', models.CharField(max_length=50, unique=True)),
             ],
+            options={
+                'abstract': False,
+            },
         ),
         migrations.CreateModel(
-            name='Ticket',
+            name='Language',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('seat_row', models.PositiveSmallIntegerField()),
-                ('seat_column', models.PositiveSmallIntegerField()),
+                ('name', models.CharField(max_length=50, unique=True)),
             ],
+            options={
+                'abstract': False,
+            },
         ),
     ]
