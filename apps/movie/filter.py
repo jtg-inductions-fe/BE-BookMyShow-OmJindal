@@ -7,6 +7,15 @@ from apps.base.models import Genre, Language
 
 
 class MovieFilter(django_filters.FilterSet):
+    """
+    FilterSet for Movie model.
+
+    Provides filtering for:
+    - Multiple genres (ManyToMany relationship)
+    - Multiple languages (ManyToMany relationship)
+    - Latest movies based on release date (last N days)
+    """
+
     genres = django_filters.ModelMultipleChoiceFilter(
         field_name="genres",
         queryset=Genre.objects.all(),

@@ -21,10 +21,18 @@ class CustomException:
 
 
 class LanguageListView(ListAPIView):
+    """
+    API view to retrieve the list of all available languages.
+    """
+
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
 
 
 class GenreListView(ListAPIView):
+    """
+    API view to retrieve the list of all available genres.
+    """
+
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
