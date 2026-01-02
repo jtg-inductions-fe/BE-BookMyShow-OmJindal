@@ -24,7 +24,9 @@ from apps.base.views import CustomException
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/", include("apps.base.urls")),
     path("api/user/", include("apps.user.urls")),
+    path("api/movies/", include("apps.movie.urls")),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
