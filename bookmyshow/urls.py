@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/", include("apps.base.urls")),
     path("api/user/", include("apps.user.urls")),
     path("api/movies/", include("apps.movie.urls")),
+    path("api/cinemas/", include("apps.cinema.urls")),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
