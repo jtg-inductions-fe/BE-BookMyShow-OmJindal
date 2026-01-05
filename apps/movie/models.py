@@ -12,8 +12,8 @@ class Movie(TimeStampedModel):
         description (str) : A brief summary of the movie.
         duration (timedelta) : Total running time of the movie.
         release_date (date) : The official date the movie was released.
-        generes (ManyToManyField) : The genres associated with the movie.
-        language (ForeignKey) : The primary language of the movie.
+        genres (ManyToManyField) : The genres associated with the movie.
+        languages (ForeignKey) : The primary language of the movie.
     """
 
     name = models.CharField(max_length=125, unique=True)
