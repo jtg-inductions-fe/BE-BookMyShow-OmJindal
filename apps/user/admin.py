@@ -1,16 +1,25 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from apps.user import models as user_models
+from apps.user.models import User
+from apps.user.forms import CustomUserChangeForm, CustomUserCreationForm
 
 
+@admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    model = user_models.User
+    """
+    Custom admin configuration for User model.
+
+    Handles user creation, updates, permissions,
+    and admin interface customization.
+    """
+
+    model = User
+    add_form = CustomUserCreationForm
+    form = CustomUserChangeForm
 
     list_display = ("email", "name", "is_active", "is_staff")
-    list_filter = ["is_staff", "is_superuser"]
     search_fields = ["email", "name"]
-
     ordering = ("email",)
 
     fieldsets = (
@@ -18,7 +27,15 @@ class CustomUserAdmin(UserAdmin):
         ("Personal Info", {"fields": ("name", "phone_number")}),
         (
             "permissions",
-            {"fields": ("is_active", "is_staff", "groups", "user_permissions")},
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                )
+            },
         ),
     )
 
@@ -26,23 +43,14 @@ class CustomUserAdmin(UserAdmin):
         (
             None,
             {
+                "classes": ("wide"),
                 "fields": (
                     "email",
                     "name",
                     "phone_number",
                     "password1",
                     "password2",
-                    "is_superuser",
-                    "is_staff",
-                )
+                ),
             },
         ),
     )
-
-    def save_model(self, request, obj, form, change):
-        if form.cleaned_data.get("password1") and not change:
-            obj.set_password(form.cleaned_data["password1"])
-        super().save_model(request, obj, form, change)
-
-
-admin.site.register(user_models.User, CustomUserAdmin)

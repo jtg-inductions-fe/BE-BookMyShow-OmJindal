@@ -15,23 +15,22 @@ phone_number_validator = RegexValidator(
 
 class User(TimeStampedModel, AbstractBaseUser, PermissionsMixin):
     """
-    Represents a user for the system.
-
-    Attributes:
-        name (str) : The full name of the user.
-        email (str) : The unique email address used for login.
-        phone_number (str) : The unique 10-digit contact number.
-        is_active (bool) : Designates whether this user is active.
-        is_staff (bool) : Designates whether the user can log into the admin site.
+    Custom User model using email as the unique identifier.
     """
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, null=True, blank=True)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(
-        unique=True, validators=[phone_number_validator], max_length=10
+        validators=[phone_number_validator],
+        max_length=10,
+        null=True,
+        blank=True,
     )
     city = models.ForeignKey(
         City, on_delete=models.SET_NULL, null=True, blank=True, related_name="users"
+    )
+    profile_picture = models.ImageField(
+        upload_to="profile_pictures/", null=True, blank=True
     )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

@@ -1,4 +1,5 @@
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 User = get_user_model()
@@ -9,46 +10,30 @@ class SignUpSerializer(serializers.ModelSerializer):
     Serializer for user registration.
 
     Handles validation and creation of a new user account.
-    The password field is write-only and is properly hashed
-    using Django's `create_user` method.
     """
+
+    password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "name", "email", "phone_number", "password"]
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = ["name", "email", "phone_number", "password", "confirm_password"]
+
+    def validate(self, attrs):
+        password = attrs.get("password")
+        confirm_password = attrs.get("confirm_password")
+
+        if password != confirm_password:
+            raise serializers.ValidationError(
+                {"confirm_password": "Password do not match"}
+            )
+
+        validate_password(password)
+        return attrs
 
     def create(self, validated_data):
-        return User.objects.create_user(
-            email=validated_data["email"],
-            password=validated_data["password"],
-            name=validated_data["name"],
-            phone_number=validated_data["phone_number"],
-        )
-
-
-class LoginSerializer(serializers.Serializer):
-    """
-    Serializer for user login.
-
-    Validates user credentials using Django's authentication
-    system and returns the authenticated user instance.
-    """
-
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        email = data.get("email")
-        password = data.get("password")
-
-        user = authenticate(email=email, password=password)
-
-        if not user:
-            raise serializers.ValidationError("Invalid email or password")
-
-        data["user"] = user
-        return data
+        validated_data.pop("confirm_password")
+        return User.objects.create_user(**validated_data)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -61,7 +46,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["name", "email", "phone_number"]
+        fields = ["name", "email", "phone_number", "profile_picture"]
+        read_only_fields = fields
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -82,4 +68,4 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["name", "phone_number"]
+        fields = ["name", "phone_number", "profile_picture"]
