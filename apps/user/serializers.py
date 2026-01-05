@@ -72,6 +72,14 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     name and phone number.
     """
 
+    def to_internal_value(self, data):
+        unknown_fields = set(data.keys()) - set(self.fields.keys())
+        if unknown_fields:
+            raise serializers.ValidationError(
+                {field: "This field is not allowed" for field in unknown_fields}
+            )
+        return super().to_internal_value(data)
+
     class Meta:
         model = User
         fields = ["name", "phone_number"]

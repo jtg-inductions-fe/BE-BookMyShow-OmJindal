@@ -14,7 +14,7 @@ from apps.user.serializers import (
 
 from apps.user.models import User
 
-from apps.user.utils import generate_refresh_token, set_refresh_cookie
+from apps.user.utils import generate_refresh_token
 
 
 class SignupView(APIView):
@@ -39,12 +39,12 @@ class SignupView(APIView):
             {
                 "message": "Signup successfully",
                 "access": str(tokens["access"]),
+                "refresh": str(tokens["refresh"]),
                 "user": UserProfileSerializer(user).data,
             },
             status=status.HTTP_201_CREATED,
         )
 
-        set_refresh_cookie(response, tokens["refresh"])
         return response
 
 
@@ -70,12 +70,12 @@ class LoginView(APIView):
             {
                 "message": "Login successfully",
                 "access": str(tokens["access"]),
+                "refresh": str(tokens["refresh"]),
                 "user": UserProfileSerializer(user).data,
             },
             status=status.HTTP_200_OK,
         )
 
-        set_refresh_cookie(response, tokens["refresh"])
         return response
 
 
@@ -132,7 +132,6 @@ class LogoutView(APIView):
             {"message": "Logged out successfully"},
             status=status.HTTP_200_OK,
         )
-        response.delete_cookie("refresh")
         return response
 
 
@@ -164,12 +163,13 @@ class CookieTokenRefreshView(APIView):
 
             response = Response(
                 {
+                    "message": "Token refreshed successfully",
                     "access": str(tokens["access"]),
+                    "refresh": str(tokens["refresh"]),
                 },
                 status=status.HTTP_200_OK,
             )
 
-            set_refresh_cookie(response, tokens["refresh"])
             return response
 
         except TokenError as e:
