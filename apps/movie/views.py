@@ -1,15 +1,14 @@
-from rest_framework import viewsets
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 
 from apps.movie.models import Movie
-from apps.movie.serializers import MovieSerializer
+from apps.movie.serializers import MovieSerializer, MovieCinemasSerializer
 from apps.movie.filter import MovieFilter
 from apps.movie.pagination import MoviePagination
 
 
-class MovieViewSet(viewsets.ReadOnlyModelViewSet):
+class MovieListAPIView(ListAPIView):
     """
-    View Set to fetch list of movie and particular
-    movie based on filters
+    API to fetch list of movies with filters & pagination
     """
 
     serializer_class = MovieSerializer
@@ -20,3 +19,15 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
         return Movie.objects.prefetch_related("languages", "genres").order_by(
             "-release_date"
         )
+
+
+class MovieDetailAPIView(RetrieveAPIView):
+    """
+    API to fetch a single movie by ID
+    """
+
+    serializer_class = MovieSerializer
+    lookup_field = "id"
+
+    def get_queryset(self):
+        return Movie.objects.prefetch_related("languages", "genres")
