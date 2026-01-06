@@ -85,13 +85,6 @@ class Booking(TimeStampedModel):
     def __str__(self):
         return f"Booking of {self.user} for {self.slot}"
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "slot"], name="unique_booking_per_user_and_slot"
-            )
-        ]
-
 
 class Ticket(TimeStampedModel):
     """

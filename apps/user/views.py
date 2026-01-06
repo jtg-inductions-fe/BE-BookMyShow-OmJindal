@@ -1,11 +1,20 @@
-from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    RetrieveUpdateAPIView,
+    ListAPIView,
+    UpdateAPIView,
+)
 from rest_framework.permissions import IsAuthenticated
 
 from apps.user.serializers import (
     SignUpSerializer,
     UserProfileSerializer,
     ProfileUpdateSerializer,
+    BookingHistorySerializer,
+    BookingCancelSerializer
 )
+
+from apps.slot.models import Booking
 
 
 class SignupView(CreateAPIView):
@@ -37,3 +46,24 @@ class ProfileView(RetrieveUpdateAPIView):
         Return the currently authenticated user.
         """
         return self.request.user
+
+
+class PurchaseHistoryView(ListAPIView):
+    serializer_class = BookingHistorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            Booking.objects.filter(user=self.request.user)
+            .prefetch_related("tickets_by_booking")
+            .select_related("slot", "slot__cinema", "slot__movie")
+        )
+
+
+class BookingCancelView(UpdateAPIView):
+    serializer_class = BookingCancelSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["patch"]
+
+    def get_queryset(self):
+        return Booking.objects.filter(user=self.request.user)

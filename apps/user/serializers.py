@@ -2,6 +2,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from apps.slot.models import Booking
+from apps.slot.models import Slot
+from apps.movie.models import Movie
+from apps.cinema.models import Cinema
+
 User = get_user_model()
 
 
@@ -69,3 +74,48 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["name", "phone_number", "profile_picture"]
+
+
+class MovieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = ["id", "name", "duration", "poster", "description"]
+
+
+class CinemaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cinema
+        fields = ["id", "name", "image", "city", "address"]
+
+
+class SlotSerializer(serializers.ModelSerializer):
+    cinema = CinemaSerializer()
+    movie = MovieSerializer()
+
+    class Meta:
+        model = Slot
+        fields = ["movie", "cinema", "start_time"]
+
+
+class BookingHistorySerializer(serializers.ModelSerializer):
+    slot = SlotSerializer()
+
+    class Meta:
+        model = Booking
+        fields = ["slot", "status"]
+
+
+class BookingCancelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = []
+
+    def update(self, instance, validated_data):
+        if instance.status == Booking.BookingStatus.CANCELLED:
+            raise serializers.ValidationError(
+                {"detail": "Booking is already cancelled."}
+            )
+
+        instance.status = Booking.BookingStatus.CANCELLED
+        instance.save()
+        return instance
