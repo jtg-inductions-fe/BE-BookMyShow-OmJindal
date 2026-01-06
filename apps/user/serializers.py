@@ -3,6 +3,11 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from apps.slot.models import Booking
+from apps.slot.models import Slot
+from apps.movie.models import Movie
+from apps.cinema.models import Cinema
+
 User = get_user_model()
 
 
@@ -87,3 +92,90 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         attrs["email"] = attrs["email"].lower()
         return super().validate(attrs)
+
+
+class MovieSerializer(serializers.ModelSerializer):
+    """
+    Serializer for basic movie details.
+
+    Used to represent minimal movie information inside
+    nested serializers like SlotSerializer.
+    """
+
+    class Meta:
+        model = Movie
+        fields = ["id", "name", "duration", "poster", "description"]
+
+
+class CinemaSerializer(serializers.ModelSerializer):
+    """
+    Serializer for basic cinema details.
+
+    Provides essential cinema information to be embedded
+    inside slot-related responses.
+    """
+
+    class Meta:
+        model = Cinema
+        fields = ["id", "name", "image", "city", "address"]
+
+
+class SlotSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a movie screening slot.
+
+    Includes nested movie and cinema information along with
+    the slot start time.
+    """
+
+    cinema = CinemaSerializer()
+    movie = MovieSerializer()
+
+    class Meta:
+        model = Slot
+        fields = ["movie", "cinema", "start_time"]
+
+
+class BookingHistorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for booking history records.
+
+    Represents a booking with its associated slot details
+    and current booking status.
+    """
+
+    slot = SlotSerializer()
+
+    class Meta:
+        model = Booking
+        fields = ["slot", "status"]
+
+
+class BookingCancelSerializer(serializers.ModelSerializer):
+    """
+    Serializer to handle booking cancellation.
+
+    This serializer does not accept any writable fields.
+    It only updates the booking status to CANCELLED
+    after validating the current booking state.
+    """
+
+    class Meta:
+        model = Booking
+        fields = []
+
+    def update(self, instance, validated_data):
+        """
+        Cancel a booking if it is not already cancelled.
+
+        Raises:
+            ValidationError: If the booking is already cancelled.
+        """
+        if instance.status == Booking.BookingStatus.CANCELLED:
+            raise serializers.ValidationError(
+                {"detail": "Booking is already cancelled."}
+            )
+
+        instance.status = Booking.BookingStatus.CANCELLED
+        instance.save()
+        return instance
