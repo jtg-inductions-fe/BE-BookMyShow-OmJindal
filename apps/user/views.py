@@ -11,7 +11,7 @@ from apps.user.serializers import (
     UserProfileSerializer,
     ProfileUpdateSerializer,
     BookingHistorySerializer,
-    BookingCancelSerializer
+    BookingCancelSerializer,
 )
 
 from apps.slot.models import Booking
@@ -49,6 +49,13 @@ class ProfileView(RetrieveUpdateAPIView):
 
 
 class PurchaseHistoryView(ListAPIView):
+    """
+    API view to retrieve the authenticated user's booking history.
+
+    Returns a list of bookings made by the logged-in user along with
+    nested slot, movie, and cinema details.
+    """
+
     serializer_class = BookingHistorySerializer
     permission_classes = [IsAuthenticated]
 
@@ -61,6 +68,15 @@ class PurchaseHistoryView(ListAPIView):
 
 
 class BookingCancelView(UpdateAPIView):
+    """
+    API view to cancel a booking.
+
+    Allows an authenticated user to cancel their own booking
+    using a PATCH request.
+
+    The booking status is updated to `CANCELLED`.
+    """
+
     serializer_class = BookingCancelSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["patch"]

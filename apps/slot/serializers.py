@@ -7,12 +7,28 @@ from apps.movie.serializers import MovieSerializer
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    """
+    Serializer for individual movie tickets.
+
+    Represents a booked seat using its row and column
+    inside a cinema hall.
+    """
+
     class Meta:
         model = Ticket
         fields = ["seat_row", "seat_column"]
 
 
 class SlotTicketSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a movie slot along with its booked tickets.
+
+    Includes:
+    - Slot details (time and price)
+    - Related movie and cinema information
+    - All tickets booked under CONFIRMED bookings for the slot
+    """
+
     tickets = serializers.SerializerMethodField()
     cinema = CinemaSerializer()
     movie = MovieSerializer()
@@ -38,6 +54,14 @@ class SlotTicketSerializer(serializers.ModelSerializer):
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer to handle booking creation.
+
+    Accepts seat details, validates seat uniqueness,
+    checks availability, and creates a confirmed booking
+    along with its tickets atomically.
+    """
+
     seats = TicketSerializer(many=True, write_only=True)
 
     class Meta:

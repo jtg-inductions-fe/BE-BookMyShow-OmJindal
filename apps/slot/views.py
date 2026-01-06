@@ -8,6 +8,10 @@ from apps.slot.models import Slot, Booking, Ticket
 
 
 class SlotTicketRetrieveSerializer(RetrieveAPIView):
+    """
+    API view to retrieve a slot along with its confirmed bookings and tickets.
+    """
+
     serializer_class = SlotTicketSerializer
     lookup_field = "id"
 
@@ -24,6 +28,10 @@ class SlotTicketRetrieveSerializer(RetrieveAPIView):
 
 
 class BookingCreationSerializer(CreateAPIView):
+    """
+    API view to create a booking for a specific slot.
+    """
+
     serializer_class = BookingCreateSerializer
     permission_classes = [IsAuthenticated]
 
