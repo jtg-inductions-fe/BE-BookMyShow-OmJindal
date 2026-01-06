@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/user/", include("apps.user.urls")),
     path("api/movies/", include("apps.movie.urls")),
     path("api/cinemas/", include("apps.cinema.urls")),
+    path("api/slots/", include("apps.slot.urls")),
 ]
 
 handler404 = CustomException.custom_404_view
