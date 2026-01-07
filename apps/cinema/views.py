@@ -17,7 +17,7 @@ class CinemaListAPIView(ListAPIView):
     """
 
     serializer_class = CinemaSerializer
-    queryset = Cinema.objects.select_related("city")
+    queryset = Cinema.objects.all()
     filterset_class = CinemaFilter
     pagination_class = CinemaPagination
 

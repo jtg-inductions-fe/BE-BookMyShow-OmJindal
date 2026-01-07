@@ -13,8 +13,6 @@ class CinemaSerializer(serializers.ModelSerializer):
     basic details about a cinema along with its city information.
     """
 
-    city = serializers.SlugRelatedField(read_only=True, slug_field="id")
-
     class Meta:
         model = Cinema
         fields = [

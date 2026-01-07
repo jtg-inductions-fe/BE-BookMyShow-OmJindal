@@ -2,7 +2,12 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.db.models import Prefetch
 
 from apps.movie.models import Movie
-from apps.movie.serializers import MovieSerializer, MovieDetailSerializer
+from apps.slot.models import Slot
+from apps.movie.serializers import (
+    MovieSerializer,
+    MovieDetailSerializer,
+    MovieCinemasSerializer,
+)
 from apps.movie.filter import MovieFilter
 from apps.movie.pagination import MoviePagination
 
