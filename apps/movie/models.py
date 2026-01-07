@@ -18,7 +18,7 @@ class Movie(TimeStampedModel):
 
     name = models.CharField(max_length=125, unique=True)
     description = models.TextField()
-    duration = models.DurationField()
+    duration = models.DurationField(help_text="HH:MM:SS")
     release_date = models.DateField()
     genres = models.ManyToManyField(Genre, related_name="movies_by_genre")
     languages = models.ManyToManyField(Language, related_name="movies_by_language")
