@@ -81,7 +81,13 @@ class PurchaseHistoryView(ListAPIView):
         return (
             Booking.objects.filter(user=self.request.user)
             .prefetch_related("tickets_by_booking")
-            .select_related("slot", "slot__cinema", "slot__movie")
+            .select_related(
+                "slot",
+                "slot__cinema",
+                "slot__cinema__city",
+                "slot__movie",
+                "slot",
+            )
         )
 
 

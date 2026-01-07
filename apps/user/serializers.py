@@ -3,8 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from apps.slot.models import Booking
-from apps.slot.models import Slot
+from apps.slot.models import Booking, Ticket, Slot
 from apps.movie.models import Movie
 from apps.cinema.models import Cinema
 
@@ -74,7 +73,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         unknown_fields = set(data.keys()) - set(self.fields.keys())
         if unknown_fields:
             raise serializers.ValidationError(
-                {field: "This field is not allowed" for field in unknown_fields}
+                dict.fromkeys(unknown_fields, "This field is not allowed")
             )
         return super().to_internal_value(data)
 
@@ -109,15 +108,14 @@ class MovieSerializer(serializers.ModelSerializer):
 
 class CinemaSerializer(serializers.ModelSerializer):
     """
-    Serializer for basic cinema details.
-
-    Provides essential cinema information to be embedded
-    inside slot-related responses.
+    Serializer for listing cinema information.
     """
+
+    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
 
     class Meta:
         model = Cinema
-        fields = ["id", "name", "image", "city", "address"]
+        fields = ["name", "city", "address"]
 
 
 class SlotSerializer(serializers.ModelSerializer):
@@ -129,11 +127,17 @@ class SlotSerializer(serializers.ModelSerializer):
     """
 
     cinema = CinemaSerializer()
-    movie = MovieSerializer()
+    movie = serializers.SlugRelatedField(read_only=True, slug_field="name")
 
     class Meta:
         model = Slot
         fields = ["movie", "cinema", "start_time"]
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ["seat_row", "seat_column"]
 
 
 class BookingHistorySerializer(serializers.ModelSerializer):
@@ -145,10 +149,14 @@ class BookingHistorySerializer(serializers.ModelSerializer):
     """
 
     slot = SlotSerializer()
+    seats = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
-        fields = ["slot", "status"]
+        fields = ["id", "slot", "status", "seats"]
+
+    def get_seats(self, booking):
+        return TicketSerializer(booking.tickets_by_booking.all(), many=True).data
 
 
 class BookingCancelSerializer(serializers.ModelSerializer):
@@ -162,7 +170,7 @@ class BookingCancelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = []
+        fields = ["id", "status"]
 
     def update(self, instance, validated_data):
         """

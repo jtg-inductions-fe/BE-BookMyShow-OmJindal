@@ -6,5 +6,5 @@ urlpatterns = [
     path(
         "<int:id>/", SlotTicketRetrieveSerializer.as_view(), name="slot-ticket-detail"
     ),
-    path("<int:id>/book", BookingCreationSerializer.as_view(), name="slot-booking"),
+    path("<int:id>/book/", BookingCreationSerializer.as_view(), name="slot-booking"),
 ]

@@ -2,8 +2,7 @@ from rest_framework import serializers
 from django.db import transaction
 
 from apps.slot.models import Slot, Booking, Ticket
-from apps.cinema.serializers import CinemaSerializer
-from apps.movie.serializers import MovieSerializer
+from apps.cinema.models import Cinema
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -19,6 +18,18 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ["seat_row", "seat_column"]
 
 
+class CinemaSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing cinema information.
+    """
+
+    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
+
+    class Meta:
+        model = Cinema
+        fields = ["name", "city", "rows", "seats_per_row"]
+
+
 class SlotTicketSerializer(serializers.ModelSerializer):
     """
     Serializer for a movie slot along with its booked tickets.
@@ -31,7 +42,7 @@ class SlotTicketSerializer(serializers.ModelSerializer):
 
     tickets = serializers.SerializerMethodField()
     cinema = CinemaSerializer()
-    movie = MovieSerializer()
+    movie = serializers.SlugRelatedField(read_only=True, slug_field="name")
 
     class Meta:
         model = Slot
@@ -39,7 +50,6 @@ class SlotTicketSerializer(serializers.ModelSerializer):
             "id",
             "price",
             "start_time",
-            "end_time",
             "movie",
             "cinema",
             "tickets",
@@ -71,6 +81,9 @@ class BookingCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         seats = attrs["seats"]
 
+        if len(seats) == 0:
+            raise serializers.ValidationError({"seats": "Cannot be empty."})
+
         seat_keys = [(s["seat_row"], s["seat_column"]) for s in seats]
 
         if len(seat_keys) != len(set(seat_keys)):
@@ -78,6 +91,38 @@ class BookingCreateSerializer(serializers.ModelSerializer):
                 {"seats": "Duplicate seats are not allowed"}
             )
 
+        slot = self.context["slot"]
+        cinema = slot.cinema
+
+        for row, column in seat_keys:
+            if row > cinema.rows:
+                raise serializers.ValidationError(
+                    {"seat_row": f"It exceeds cinema capacity of {cinema.rows} rows."}
+                )
+            if column > cinema.seats_per_row:
+                raise serializers.ValidationError(
+                    {
+                        "seat_column": f"It exceeds cinema capacity of {cinema.seats_per_row} columns."
+                    }
+                )
+
+        booked_seats = set(
+            Ticket.objects.filter(
+                booking__slot=slot,
+                booking__status=Booking.BookingStatus.CONFIRMED,
+            ).values_list("seat_row", "seat_column")
+        )
+
+        conflict = booked_seats & set(seat_keys)
+        if conflict:
+            raise serializers.ValidationError(
+                {
+                    "seats": [
+                        f"seat_row:{row}, seat_column:{col}" for row, col in conflict
+                    ],
+                    "detail": "Seats already booked",
+                }
+            )
         return attrs
 
     def create(self, validated_data):
@@ -89,19 +134,6 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         requested_seats = {(s["seat_row"], s["seat_column"]) for s in seats}
 
         with transaction.atomic():
-            booked_seats = set(
-                Ticket.objects.filter(
-                    booking__slot=slot,
-                    booking__status=Booking.BookingStatus.CONFIRMED,
-                ).values_list("seat_row", "seat_column")
-            )
-
-            conflict = booked_seats & requested_seats
-            if conflict:
-                raise serializers.ValidationError(
-                    {"seats": [f"{row}{col}" for row, col in conflict]}
-                )
-
             booking = Booking.objects.create(
                 user=user,
                 slot=slot,
