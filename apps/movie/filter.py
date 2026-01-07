@@ -38,4 +38,4 @@ class MovieFilter(django_filters.FilterSet):
         """
         days = int(value)
         date_from = timezone.now().date() - timedelta(days=days)
-        return queryset.filter(release_date__gt=date_from)
+        return queryset.filter(release_date__gte=date_from)
