@@ -3,7 +3,6 @@ from rest_framework import serializers
 from apps.cinema.models import Cinema
 from apps.movie.models import Movie
 from apps.slot.models import Slot
-from apps.base.serializers import CitySerializer
 
 
 class CinemaSerializer(serializers.ModelSerializer):
@@ -14,8 +13,6 @@ class CinemaSerializer(serializers.ModelSerializer):
     basic details about a cinema along with its city information.
     """
 
-    city = CitySerializer(read_only=True)
-
     class Meta:
         model = Cinema
         fields = [
@@ -23,8 +20,6 @@ class CinemaSerializer(serializers.ModelSerializer):
             "name",
             "address",
             "city",
-            "rows",
-            "seats_per_row",
             "image",
         ]
 
@@ -32,7 +27,7 @@ class CinemaSerializer(serializers.ModelSerializer):
 class SlotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Slot
-        fields = ["id", "price", "start_time", "end_time"]
+        fields = ["id", "start_time"]
 
 
 class MovieSerializer(serializers.ModelSerializer):
@@ -41,12 +36,8 @@ class MovieSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "description",
             "duration",
-            "release_date",
             "poster",
-            "languages",
-            "genres",
         ]
 
 
@@ -58,7 +49,7 @@ class CinemaDetailSerializer(serializers.ModelSerializer):
     movie slots available in the cinema.
     """
 
-    city = CitySerializer(read_only=True)
+    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
     movies = serializers.SerializerMethodField()
 
     class Meta:
@@ -68,8 +59,6 @@ class CinemaDetailSerializer(serializers.ModelSerializer):
             "name",
             "address",
             "city",
-            "rows",
-            "seats_per_row",
             "image",
             "movies",
         ]
