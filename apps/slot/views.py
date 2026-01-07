@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
 from apps.slot.serializers import SlotTicketSerializer, BookingCreateSerializer
-from apps.slot.models import Slot, Booking, Ticket
+from apps.slot.models import Slot, Booking
 
 
 class SlotTicketRetrieveSerializer(RetrieveAPIView):
