@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
 from apps.slot.serializers import SlotTicketSerializer, BookingCreateSerializer
-from apps.slot.models import Slot, Booking, Ticket
+from apps.slot.models import Slot, Booking
 
 
 class SlotTicketRetrieveSerializer(RetrieveAPIView):
@@ -17,7 +17,9 @@ class SlotTicketRetrieveSerializer(RetrieveAPIView):
 
     def get_queryset(self):
 
-        return Slot.objects.select_related("cinema", "movie").prefetch_related(
+        return Slot.objects.select_related(
+            "cinema", "movie", "cinema__city"
+        ).prefetch_related(
             Prefetch(
                 "bookings_by_slot",
                 queryset=Booking.objects.filter(
