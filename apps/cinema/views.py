@@ -18,7 +18,6 @@ class CinemaViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = CinemaPagination
 
     def get_serializer_class(self):
-        print("hello")
         if self.action == "list":
             return CinemaSerializer
 
