@@ -18,8 +18,6 @@ class MovieSerializer(serializers.ModelSerializer):
             "duration",
             "release_date",
             "poster",
-            "languages",
-            "genres",
         ]
 
 
