@@ -1,4 +1,4 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework import viewsets
 from django.db.models import Prefetch
 
 from apps.cinema.models import Cinema
@@ -8,28 +8,25 @@ from apps.cinema.filter import CinemaFilter
 from apps.cinema.pagination import CinemaPagination
 
 
-class CinemaListAPIView(ListAPIView):
+class CinemaViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    List all cinemas.
-
-    - Supports filtering by city
-    - Paginated response
+    View Set to fetch paginated list of cinema and particular
+    cinema based on filters
     """
 
-    serializer_class = CinemaSerializer
-    queryset = Cinema.objects.all()
     filterset_class = CinemaFilter
     pagination_class = CinemaPagination
 
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CinemaSerializer
 
-class CinemaDetailAPIView(RetrieveAPIView):
-    """
-    Retrieve a single cinema with slots and movies.
-    """
-
-    serializer_class = CinemaDetailSerializer
+        return CinemaDetailSerializer
 
     def get_queryset(self):
+        if self.action == "list":
+            return Cinema.objects.all()
+
         return Cinema.objects.select_related("city").prefetch_related(
             Prefetch(
                 "slots_by_cinema",
