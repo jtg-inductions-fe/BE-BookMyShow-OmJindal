@@ -22,6 +22,7 @@ class ProfileView(RetrieveUpdateAPIView):
     """
 
     permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "patch"]
 
     def get_serializer_class(self):
         """
