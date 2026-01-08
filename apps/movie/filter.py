@@ -16,21 +16,23 @@ class MovieFilter(django_filters.FilterSet):
     - Latest movies based on release date (last N days)
     """
 
-    genres = django_filters.ModelMultipleChoiceFilter(
-        field_name="genres",
-        queryset=Genre.objects.all(),
-    )
+    genres = django_filters.CharFilter(method="filter_genres")
 
-    languages = django_filters.ModelMultipleChoiceFilter(
-        field_name="languages",
-        queryset=Language.objects.all(),
-    )
+    languages = django_filters.CharFilter(method="filter_languages")
 
     latest_days = django_filters.NumberFilter(method="filter_latest_movies")
 
     class Meta:
         model = Movie
         fields = ["genres", "languages"]
+
+    def filter_genres(self, queryset, name, value):
+        genre_ids = value.split(",")
+        return queryset.filter(genres__id__in=genre_ids).distinct()
+
+    def filter_languages(self, queryset, name, value):
+        language_ids = value.split(",")
+        return queryset.filter(languages__id__in=language_ids).distinct()
 
     def filter_latest_movies(self, queryset, name, value):
         """
