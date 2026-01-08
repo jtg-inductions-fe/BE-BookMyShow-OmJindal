@@ -1,8 +1,6 @@
 from rest_framework import serializers
 
 from apps.cinema.models import Cinema
-from apps.movie.models import Movie
-from apps.slot.models import Slot
 
 
 class CinemaSerializer(serializers.ModelSerializer):
@@ -21,23 +19,6 @@ class CinemaSerializer(serializers.ModelSerializer):
             "address",
             "city",
             "image",
-        ]
-
-
-class SlotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Slot
-        fields = ["id", "start_time"]
-
-
-class MovieSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Movie
-        fields = [
-            "id",
-            "name",
-            "duration",
-            "poster",
         ]
 
 
@@ -71,10 +52,16 @@ class CinemaDetailSerializer(serializers.ModelSerializer):
 
             if movie.id not in movie_map:
                 movie_map[movie.id] = {
-                    "movie": MovieSerializer(movie).data,
+                    "movie": {
+                        "name": movie.name,
+                        "poster": movie.poster,
+                        "duration": f"{movie.duration}",
+                    },
                     "slots": [],
                 }
 
-            movie_map[movie.id]["slots"].append(SlotSerializer(slot).data)
+            movie_map[movie.id]["slots"].append(
+                {"id": slot.id, "start_time": slot.start_time}
+            )
 
         return list(movie_map.values())

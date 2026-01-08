@@ -1,56 +1,44 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.db.models import Prefetch
+from rest_framework import viewsets
 
 from apps.movie.models import Movie
 from apps.slot.models import Slot
 from apps.movie.serializers import (
     MovieSerializer,
-    MovieDetailSerializer,
     MovieCinemasSerializer,
 )
 from apps.movie.filter import MovieFilter
 from apps.movie.pagination import MoviePagination
 
 
-class MovieListAPIView(ListAPIView):
+class MovieViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API to fetch list of movies with filters & pagination
+    View Set to fetch paginated list of movie and particular
+    movie based on filters
     """
 
-    serializer_class = MovieSerializer
     pagination_class = MoviePagination
     filterset_class = MovieFilter
-    queryset = Movie.objects.all()
 
+    def get_serializer_class(self):
+        if self.action == "list":
+            return MovieSerializer
 
-class MovieDetailAPIView(RetrieveAPIView):
-    """
-    API to fetch a single movie by ID
-    """
-
-    serializer_class = MovieDetailSerializer
+        return MovieCinemasSerializer
 
     def get_queryset(self):
-        return Movie.objects.prefetch_related("languages", "genres")
+        if self.action == "list":
+            return Movie.objects.all()
 
-
-class MovieCinemasAPIView(RetrieveAPIView):
-    """
-    API to fetch a movie's cinema and slot details
-    """
-
-    serializer_class = MovieCinemasSerializer
-
-    def get_queryset(self):
-        location_id = self.request.query_params.get("location_id")
+        city = self.request.query_params.get("city")
 
         slots_qs = Slot.objects.select_related(
             "cinema",
             "cinema__city",
         )
 
-        if location_id:
-            slots_qs = slots_qs.filter(cinema__city_id=location_id)
+        if city:
+            slots_qs = slots_qs.filter(cinema__city_id=city)
 
         return Movie.objects.prefetch_related(
             Prefetch(

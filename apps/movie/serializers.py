@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from apps.movie.models import Movie
-from apps.cinema.serializers import CinemaSerializer, SlotSerializer
 
 
 class MovieSerializer(serializers.ModelSerializer):
@@ -19,33 +18,6 @@ class MovieSerializer(serializers.ModelSerializer):
             "duration",
             "release_date",
             "poster",
-        ]
-
-
-class MovieDetailSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Movie detail.
-
-    This serializer is used to represent of a particular movie.
-    """
-
-    genres = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
-    languages = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name"
-    )
-
-    class Meta:
-
-        model = Movie
-        fields = [
-            "id",
-            "name",
-            "description",
-            "duration",
-            "release_date",
-            "poster",
-            "languages",
-            "genres",
         ]
 
 
@@ -70,13 +42,20 @@ class MovieCinemasSerializer(serializers.ModelSerializer):
 
         for slot in movie.slots_by_movie.all():
             cinema = slot.cinema
-
+            city = cinema.city
             if cinema.id not in cinema_map:
                 cinema_map[cinema.id] = {
-                    "cinema": CinemaSerializer(cinema).data,
+                    "cinema": {
+                        "name": cinema.name,
+                        "address": cinema.address,
+                        "city": city.id,
+                        "image": cinema.image,
+                    },
                     "slots": [],
                 }
 
-            cinema_map[cinema.id]["slots"].append(SlotSerializer(slot).data)
+            cinema_map[cinema.id]["slots"].append(
+                {"id": slot.id, "start_time": slot.start_time}
+            )
 
         return list(cinema_map.values())
