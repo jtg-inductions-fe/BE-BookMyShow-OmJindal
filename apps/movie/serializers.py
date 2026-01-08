@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from apps.movie.models import Movie
-from apps.cinema.serializers import CinemaSerializer, SlotSerializer
 
 
 class MovieSerializer(serializers.ModelSerializer):

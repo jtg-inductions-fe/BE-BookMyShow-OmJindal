@@ -1,11 +1,12 @@
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import CursorPagination
 
 
-class CinemaPagination(PageNumberPagination):
+class CinemaPagination(CursorPagination):
     """
-    Pagination class for Cinema list API.
+    Pagination class for Cinema API.
     """
 
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 50
+    ordering = "id"

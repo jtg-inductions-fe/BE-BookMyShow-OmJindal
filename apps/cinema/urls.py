@@ -1,8 +1,7 @@
-from django.urls import path
+from rest_framework.routers import DefaultRouter
 
-from apps.cinema.views import CinemaListAPIView, CinemaDetailAPIView
+from apps.cinema.views import CinemaViewSet
 
-urlpatterns = [
-    path("", CinemaListAPIView.as_view(), name="cinema-list"),
-    path("<int:pk>/", CinemaDetailAPIView.as_view(), name="cinema-detail"),
-]
+router = DefaultRouter()
+router.register("", CinemaViewSet, basename="cinemas")
+urlpatterns = router.urls
