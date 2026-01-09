@@ -19,30 +19,3 @@ class MovieSerializer(serializers.ModelSerializer):
             "release_date",
             "poster",
         ]
-
-
-class MovieDetailSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Movie detail.
-
-    This serializer is used to represent of a particular movie.
-    """
-
-    genres = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
-    languages = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name"
-    )
-
-    class Meta:
-
-        model = Movie
-        fields = [
-            "id",
-            "name",
-            "description",
-            "duration",
-            "release_date",
-            "poster",
-            "languages",
-            "genres",
-        ]
