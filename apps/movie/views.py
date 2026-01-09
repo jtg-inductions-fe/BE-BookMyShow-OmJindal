@@ -15,14 +15,3 @@ class MovieListAPIView(ListAPIView):
     pagination_class = MoviePagination
     filterset_class = MovieFilter
     queryset = Movie.objects.all()
-
-
-class MovieDetailAPIView(RetrieveAPIView):
-    """
-    API to fetch a single movie by ID
-    """
-
-    serializer_class = MovieDetailSerializer
-
-    def get_queryset(self):
-        return Movie.objects.prefetch_related("languages", "genres")
