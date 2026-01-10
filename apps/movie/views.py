@@ -32,10 +32,7 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
 
         city = self.request.query_params.get("city")
 
-        slots_qs = Slot.objects.select_related(
-            "cinema",
-            "cinema__city",
-        )
+        slots_qs = Slot.objects.select_related("cinema")
 
         if city:
             slots_qs = slots_qs.filter(cinema__city_id=city)
