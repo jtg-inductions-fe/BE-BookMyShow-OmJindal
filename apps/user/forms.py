@@ -1,4 +1,3 @@
-from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from apps.user.models import User
 
@@ -22,4 +21,12 @@ class CustomUserChangeForm(UserChangeForm):
 
     class Meta:
         model = User
-        fields = ("email", "name", "phone_number", "is_active", "is_staff")
+        fields = (
+            "email",
+            "name",
+            "phone_number",
+            "profile_picture",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+        )

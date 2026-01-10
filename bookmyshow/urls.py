@@ -27,8 +27,11 @@ urlpatterns = [
     path("api/user/", include("apps.user.urls")),
 ]
 
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
 handler404 = CustomException.custom_404_view
 handler500 = CustomException.custom_500_view
+
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0]
+    )
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
