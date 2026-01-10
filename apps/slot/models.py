@@ -45,6 +45,18 @@ class Slot(TimeStampedModel):
                 "This slot overlaps with an existing slot for the same movie in this cinema."
             )
 
+        running_time = self.end_time - self.start_time
+        if running_time < self.movie.duration:
+            raise ValidationError(
+                "The running time of the slot must be greater than or equal to duration of the movie."
+            )
+
+        slot_start_date = self.start_time.date()
+        if self.movie.release_date > slot_start_date:
+            raise ValidationError(
+                "The movie start_time cannot be set before movie release date."
+            )
+
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -84,13 +96,6 @@ class Booking(TimeStampedModel):
 
     def __str__(self):
         return f"Booking of {self.user} for {self.slot}"
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "slot"], name="unique_booking_per_user_and_slot"
-            )
-        ]
 
 
 class Ticket(TimeStampedModel):

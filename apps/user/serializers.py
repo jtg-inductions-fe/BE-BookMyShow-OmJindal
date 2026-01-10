@@ -2,6 +2,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from apps.slot.models import Booking, Ticket, Slot
+from apps.movie.models import Movie
+from apps.cinema.models import Cinema
+
 User = get_user_model()
 
 
@@ -68,10 +72,106 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         unknown_fields = set(data.keys()) - set(self.fields.keys())
         if unknown_fields:
             raise serializers.ValidationError(
-                {field: "This field is not allowed" for field in unknown_fields}
+                dict.fromkeys(unknown_fields, "This field is not allowed")
             )
         return super().to_internal_value(data)
 
     class Meta:
         model = User
         fields = ["name", "phone_number", "profile_picture"]
+
+
+class MovieSerializer(serializers.ModelSerializer):
+    """
+    Serializer for basic movie details.
+
+    Used to represent minimal movie information inside
+    nested serializers like SlotSerializer.
+    """
+
+    class Meta:
+        model = Movie
+        fields = ["id", "name", "duration", "poster", "description"]
+
+
+class CinemaSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing cinema information.
+    """
+
+    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
+
+    class Meta:
+        model = Cinema
+        fields = ["name", "city", "address"]
+
+
+class SlotSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a movie screening slot.
+
+    Includes nested movie and cinema information along with
+    the slot start time.
+    """
+
+    cinema = CinemaSerializer()
+    movie = serializers.SlugRelatedField(read_only=True, slug_field="name")
+
+    class Meta:
+        model = Slot
+        fields = ["movie", "cinema", "start_time"]
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ["seat_row", "seat_column"]
+
+
+class BookingHistorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for booking history records.
+
+    Represents a booking with its associated slot details
+    and current booking status.
+    """
+
+    slot = SlotSerializer()
+    seats = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Booking
+        fields = ["id", "slot", "status", "seats"]
+
+    def get_seats(self, booking):
+        return TicketSerializer(booking.tickets_by_booking.all(), many=True).data
+
+
+class BookingCancelSerializer(serializers.ModelSerializer):
+    """
+    Serializer to handle booking cancellation.
+
+    This serializer does not accept any writable fields.
+    It only updates the booking status to CANCELLED
+    after validating the current booking state.
+    """
+
+    class Meta:
+        model = Booking
+        fields = ["id", "status"]
+
+    def update(self, instance, validated_data):
+        """
+        Cancel a booking if it is not already cancelled.
+
+        Raises:
+            ValidationError: If the booking is already cancelled.
+        """
+        if instance.status == Booking.BookingStatus.CANCELLED:
+            raise serializers.ValidationError(
+                {"detail": "Booking is already cancelled."}
+            )
+
+        instance.status = Booking.BookingStatus.CANCELLED
+        instance.save()
+        return instance
