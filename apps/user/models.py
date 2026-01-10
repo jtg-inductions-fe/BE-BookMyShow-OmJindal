@@ -42,3 +42,7 @@ class User(TimeStampedModel, AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def save(self):
+        self.email = self.email.lower()
+        return super().save()
