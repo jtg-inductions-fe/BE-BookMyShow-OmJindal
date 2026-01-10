@@ -12,16 +12,16 @@ class Movie(TimeStampedModel):
         description (str) : A brief summary of the movie.
         duration (timedelta) : Total running time of the movie.
         release_date (date) : The official date the movie was released.
-        generes (ManyToManyField) : The genres associated with the movie.
-        language (ForeignKey) : The primary language of the movie.
+        genres (ManyToManyField) : The genres associated with the movie.
+        languages (ForeignKey) : The primary language of the movie.
     """
 
     name = models.CharField(max_length=125, unique=True)
     description = models.TextField()
-    duration = models.DurationField()
+    duration = models.DurationField(help_text="HH:MM:SS")
     release_date = models.DateField()
     genres = models.ManyToManyField(Genre, related_name="movies_by_genre")
-    language = models.ManyToManyField(Language, related_name="movies_by_language")
+    languages = models.ManyToManyField(Language, related_name="movies_by_language")
     poster = models.CharField(max_length=255)
 
     def __str__(self):
