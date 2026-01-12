@@ -7,7 +7,7 @@ from apps.slot.serializers import SlotTicketSerializer, BookingCreateSerializer
 from apps.slot.models import Slot, Booking
 
 
-class SlotTicketRetrieveSerializer(RetrieveAPIView):
+class SlotTicketRetrieveView(RetrieveAPIView):
     """
     API view to retrieve a slot along with its confirmed bookings and tickets.
     """
@@ -29,7 +29,7 @@ class SlotTicketRetrieveSerializer(RetrieveAPIView):
         )
 
 
-class BookingCreationSerializer(CreateAPIView):
+class BookingCreationView(CreateAPIView):
     """
     API view to create a booking for a specific slot.
     """
@@ -39,5 +39,8 @@ class BookingCreationSerializer(CreateAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["slot"] = get_object_or_404(Slot, id=self.kwargs["id"])
+        context["slot"] = get_object_or_404(
+            Slot.objects.select_related("cinema"),
+            id=self.kwargs["id"],
+        )
         return context
