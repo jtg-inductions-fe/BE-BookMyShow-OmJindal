@@ -4,11 +4,10 @@ from apps.movie.models import Movie
 
 
 class MovieSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Movie model.
-
-    This serializer is used to represent movie data in list APIs.
-    """
+    genres = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
+    languages = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
 
     class Meta:
         model = Movie
@@ -18,6 +17,8 @@ class MovieSerializer(serializers.ModelSerializer):
             "duration",
             "release_date",
             "poster",
+            "genres",
+            "languages",
         ]
 
 
@@ -32,7 +33,16 @@ class MovieCinemasSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Movie
-        fields = ["id", "name", "cinemas", "genres"]
+        fields = [
+            "id",
+            "name",
+            "cinemas",
+            "genres",
+            "description",
+            "duration",
+            "release_date",
+            "poster",
+        ]
 
     def get_cinemas(self, movie):
         cinema_map = {}

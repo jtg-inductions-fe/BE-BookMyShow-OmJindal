@@ -28,7 +28,7 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         if self.action == "list":
-            return Movie.objects.all()
+            return Movie.objects.all().prefetch_related("genres", "languages")
 
         city = self.request.query_params.get("city")
 
