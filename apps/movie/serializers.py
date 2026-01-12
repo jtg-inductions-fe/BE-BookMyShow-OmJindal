@@ -28,14 +28,11 @@ class MovieCinemasSerializer(serializers.ModelSerializer):
     """
 
     cinemas = serializers.SerializerMethodField()
+    genres = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Movie
-        fields = [
-            "id",
-            "name",
-            "cinemas",
-        ]
+        fields = ["id", "name", "cinemas", "genres"]
 
     def get_cinemas(self, movie):
         cinema_map = {}
@@ -48,7 +45,7 @@ class MovieCinemasSerializer(serializers.ModelSerializer):
                     "cinema": {
                         "name": cinema.name,
                         "address": cinema.address,
-                        "city": city.id,
+                        "city": city.name,
                         "image": cinema.image,
                     },
                     "slots": [],

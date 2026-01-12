@@ -32,7 +32,7 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
 
         city = self.request.query_params.get("city")
 
-        slots_qs = Slot.objects.select_related("cinema")
+        slots_qs = Slot.objects.select_related("cinema", "cinema__city")
 
         if city:
             slots_qs = slots_qs.filter(cinema__city_id=city)
@@ -41,5 +41,6 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
             Prefetch(
                 "slots_by_movie",
                 queryset=slots_qs,
-            )
+            ),
+            "genres",
         )
