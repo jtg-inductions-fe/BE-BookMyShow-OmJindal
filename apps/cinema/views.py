@@ -25,7 +25,7 @@ class CinemaViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         if self.action == "list":
-            return Cinema.objects.all()
+            return Cinema.objects.select_related("city")
 
         return Cinema.objects.select_related("city").prefetch_related(
             Prefetch(

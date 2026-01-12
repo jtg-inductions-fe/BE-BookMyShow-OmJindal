@@ -11,6 +11,8 @@ class CinemaSerializer(serializers.ModelSerializer):
     basic details about a cinema along with its city information.
     """
 
+    city = serializers.CharField(source="city.name", read_only=True)
+
     class Meta:
         model = Cinema
         fields = [
