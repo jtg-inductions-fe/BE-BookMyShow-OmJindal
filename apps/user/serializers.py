@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -75,3 +76,14 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["name", "phone_number", "profile_picture"]
+
+
+class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Serializer for TokenObtainPairView to normalize the email
+    by overiding validate method
+    """
+
+    def validate(self, attrs):
+        attrs["email"] = attrs["email"].lower()
+        return super().validate(attrs)

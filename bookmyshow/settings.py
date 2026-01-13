@@ -153,6 +153,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
     "SIGNING_KEY": SECRET_KEY,
+    "TOKEN_OBTAIN_SERIALIZER": "apps.user.serializers.UserTokenObtainPairSerializer",
 }
 
 MEDIA_URL = "/media/"
