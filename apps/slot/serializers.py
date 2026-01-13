@@ -94,17 +94,21 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         slot = self.context["slot"]
         cinema = slot.cinema
 
+        conflict = []
+
         for row, column in seat_keys:
-            if row > cinema.rows:
-                raise serializers.ValidationError(
-                    {"seat_row": f"It exceeds cinema capacity of {cinema.rows} rows."}
-                )
-            if column > cinema.seats_per_row:
-                raise serializers.ValidationError(
-                    {
-                        "seat_column": f"It exceeds cinema capacity of {cinema.seats_per_row} columns."
-                    }
-                )
+            if (row > cinema.rows) or (column > cinema.seats_per_row):
+                conflict.append((row, column))
+
+        if conflict:
+            raise serializers.ValidationError(
+                {
+                    "seats": [
+                        f"seat_row:{row}, seat_column:{col}" for row, col in conflict
+                    ],
+                    "detail": f"Seats exceeds cinema capacity of {cinema.rows} rows and {cinema.seats_per_row} columns",
+                }
+            )
 
         booked_seats = set(
             Ticket.objects.filter(
