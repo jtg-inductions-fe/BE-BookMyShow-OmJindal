@@ -14,5 +14,5 @@ urlpatterns = [
     path("login/", TokenObtainPairView.as_view(), name="login"),
     path("refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("bookings/", PurchaseHistoryView.as_view(), name="user-purchase-history"),
-    path("bookings/<int:pk>", BookingCancelView.as_view(), name="booking-cancel"),
+    path("bookings/<int:pk>/", BookingCancelView.as_view(), name="booking-cancel"),
 ]
