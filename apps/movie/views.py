@@ -1,4 +1,5 @@
 from django.db.models import Prefetch
+from django.utils import timezone
 from rest_framework import viewsets
 
 from apps.movie.models import Movie
@@ -27,20 +28,23 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
         return MovieCinemasSerializer
 
     def get_queryset(self):
-        if self.action == "list":
-            return Movie.objects.all().prefetch_related("genres", "languages")
-
-        city = self.request.query_params.get("city")
-
-        slots_qs = Slot.objects.select_related("cinema", "cinema__city")
-
-        if city:
-            slots_qs = slots_qs.filter(cinema__city_id=city)
-
-        return Movie.objects.prefetch_related(
-            Prefetch(
-                "slots_by_movie",
-                queryset=slots_qs,
-            ),
-            "genres",
-        )
+        date = self.request.query_params.get("date")
+        if self.action == "retrieve":
+            city = self.request.query_params.get("city")
+            slots_qs = Slot.objects.filter(
+                start_time__gt=timezone.now()
+            ).select_related("cinema", "cinema__city")
+            if city:
+                slots_qs = slots_qs.filter(cinema__city_id=city)
+            if date:
+                slots_qs = slots_qs.filter(start_time__date=date)
+            else:
+                slots_qs = slots_qs.filter(start_time__date=timezone.now().date())
+            return Movie.objects.prefetch_related(
+                Prefetch("slots_by_movie", queryset=slots_qs),
+                "genres",
+            )
+        qs = Movie.objects.all()
+        if date:
+            qs = qs.filter(slots_by_movie__start_time__date=date)
+        return qs.prefetch_related("genres", "languages").distinct()

@@ -3,7 +3,10 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.movie.models import Movie
-from apps.base.models import Genre, Language
+
+
+class NumberInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
+    pass
 
 
 class MovieFilter(django_filters.FilterSet):
@@ -14,30 +17,30 @@ class MovieFilter(django_filters.FilterSet):
     - Multiple genres (ManyToMany relationship)
     - Multiple languages (ManyToMany relationship)
     - Latest movies based on release date (last N days)
+    - Multiple Cinemas in which movie is available
+    - Slot on a particular Date
     """
 
-    genres = django_filters.CharFilter(method="filter_genres")
+    genres = NumberInFilter(field_name="genres__id", lookup_expr="in")
 
-    languages = django_filters.CharFilter(method="filter_languages")
+    languages = NumberInFilter(field_name="languages__id", lookup_expr="in")
+
+    cinemas = NumberInFilter(field_name="slots_by_movie__cinema_id", lookup_expr="in")
 
     latest_days = django_filters.NumberFilter(method="filter_latest_movies")
 
     class Meta:
         model = Movie
-        fields = ["genres", "languages"]
-
-    def filter_genres(self, queryset, name, value):
-        genre_ids = value.split(",")
-        return queryset.filter(genres__id__in=genre_ids).distinct()
-
-    def filter_languages(self, queryset, name, value):
-        language_ids = value.split(",")
-        return queryset.filter(languages__id__in=language_ids).distinct()
+        fields = ["genres", "languages", "cinemas", "latest_days"]
 
     def filter_latest_movies(self, queryset, name, value):
-        """
-        value = number of days
-        """
-        days = int(value)
+        try:
+            days = int(value)
+        except (TypeError, ValueError):
+            return queryset
+
+        if days <= 0:
+            return queryset
+
         date_from = timezone.now().date() - timedelta(days=days)
         return queryset.filter(release_date__gte=date_from)
