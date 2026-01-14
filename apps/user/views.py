@@ -78,15 +78,17 @@ class BookingViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
         return BookingHistorySerializer
 
     def get_queryset(self):
-        qs = Booking.objects.filter(user=self.request.user)
-
         if self.action == "list":
-            return qs.prefetch_related("tickets_by_booking").select_related(
-                "slot",
-                "slot__cinema",
-                "slot__cinema__city",
-                "slot__movie",
-                "slot",
+            return (
+                Booking.objects.filter(user=self.request.user)
+                .prefetch_related("tickets_by_booking")
+                .select_related(
+                    "slot",
+                    "slot__cinema",
+                    "slot__cinema__city",
+                    "slot__movie",
+                    "slot",
+                )
             )
 
-        return qs
+        return Booking.objects.filter(user=self.request.user).select_related("slot")

@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -172,18 +173,20 @@ class BookingCancelSerializer(serializers.ModelSerializer):
         model = Booking
         fields = ["id", "status"]
 
-    def update(self, instance, validated_data):
-        """
-        Cancel a booking if it is not already cancelled.
+    def validate(self, attrs):
+        booking = self.instance
 
-        Raises:
-            ValidationError: If the booking is already cancelled.
-        """
-        if instance.status == Booking.BookingStatus.CANCELLED:
+        if booking.status == Booking.BookingStatus.CANCELLED:
             raise serializers.ValidationError(
                 {"detail": "Booking is already cancelled."}
             )
 
+        if booking.slot.start_time <= timezone.now():
+            raise serializers.ValidationError(
+                {"detail": "Cannot cancel booking for past or ongoing show."}
+            )
+
+    def update(self, instance, validated_data):
         instance.status = Booking.BookingStatus.CANCELLED
         instance.save()
         return instance

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
+from django.utils import timezone
 
 from apps.slot.models import Slot, Booking, Ticket
 from apps.cinema.models import Cinema
@@ -81,6 +82,14 @@ class BookingCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         seats = attrs["seats"]
 
+        slot = self.context["slot"]
+        cinema = slot.cinema
+
+        if timezone.now() >= slot.start_time:
+            raise serializers.ValidationError(
+                {"detail": "Cannot book a slot that has already started or ended."}
+            )
+
         if len(seats) == 0:
             raise serializers.ValidationError({"seats": "Cannot be empty."})
 
@@ -90,9 +99,6 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"seats": "Duplicate seats are not allowed"}
             )
-
-        slot = self.context["slot"]
-        cinema = slot.cinema
 
         conflict = []
 
