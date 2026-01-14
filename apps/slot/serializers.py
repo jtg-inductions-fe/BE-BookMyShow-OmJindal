@@ -100,22 +100,6 @@ class BookingCreateSerializer(serializers.ModelSerializer):
                 {"seats": "Duplicate seats are not allowed"}
             )
 
-        conflict = []
-
-        for row, column in seat_keys:
-            if (row > cinema.rows) or (column > cinema.seats_per_row):
-                conflict.append((row, column))
-
-        if conflict:
-            raise serializers.ValidationError(
-                {
-                    "seats": [
-                        f"seat_row:{row}, seat_column:{col}" for row, col in conflict
-                    ],
-                    "detail": f"Seats exceeds cinema capacity of {cinema.rows} rows and {cinema.seats_per_row} columns",
-                }
-            )
-
         booked_seats = set(
             Ticket.objects.filter(
                 booking__slot=slot,
@@ -123,16 +107,23 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             ).values_list("seat_row", "seat_column")
         )
 
-        conflict = booked_seats & set(seat_keys)
+        invalid_seats = booked_seats & set(seat_keys)
+
+        conflict = []
+
+        for row, column in seat_keys:
+            if (row > cinema.rows) or (column > cinema.seats_per_row):
+                conflict.append(
+                    f"seat_row:{row}, seat_column:{column} exceeds cinema capacity of {cinema.rows} rows and {cinema.seats_per_row} columns"
+                )
+            if (row, column) in invalid_seats:
+                conflict.append(
+                    f"seat_row:{row}, seat_column:{column} is already booked."
+                )
+
         if conflict:
-            raise serializers.ValidationError(
-                {
-                    "seats": [
-                        f"seat_row:{row}, seat_column:{col}" for row, col in conflict
-                    ],
-                    "detail": "Seats already booked",
-                }
-            )
+            raise serializers.ValidationError({"seats": conflict})
+
         return attrs
 
     def create(self, validated_data):

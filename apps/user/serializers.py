@@ -186,6 +186,8 @@ class BookingCancelSerializer(serializers.ModelSerializer):
                 {"detail": "Cannot cancel booking for past or ongoing show."}
             )
 
+        return attrs
+
     def update(self, instance, validated_data):
         instance.status = Booking.BookingStatus.CANCELLED
         instance.save()

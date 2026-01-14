@@ -13,7 +13,7 @@ from apps.user.serializers import (
     BookingHistorySerializer,
     BookingCancelSerializer,
 )
-
+from apps.user.permission import IsOwnerOrReadOnly
 from apps.slot.models import Booking
 
 
@@ -70,7 +70,8 @@ class BookingViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
     - Cancelling a specific booking
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOwnerOrReadOnly]
+    http_method_names = ["get", "patch"]
 
     def get_serializer_class(self):
         if self.action == "partial_update":
@@ -87,8 +88,6 @@ class BookingViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
                     "slot__cinema",
                     "slot__cinema__city",
                     "slot__movie",
-                    "slot",
                 )
             )
-
-        return Booking.objects.filter(user=self.request.user).select_related("slot")
+        return Booking.objects.filter().select_related("slot")
