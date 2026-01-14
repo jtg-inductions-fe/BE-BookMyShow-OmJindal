@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from rest_framework.generics import ListAPIView
+from rest_framework.filters import SearchFilter
 
 from apps.base.models import Language, Genre, City
 from apps.base.serializers import LanguageSerializer, GenreSerializer, CitySerializer
@@ -45,3 +46,5 @@ class CityListView(ListAPIView):
 
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    filter_backends = [SearchFilter]
+    search_fields = ["name"]
