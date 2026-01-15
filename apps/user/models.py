@@ -8,7 +8,7 @@ from apps.base.models import City, TimeStampedModel
 # Validator to ensure the phone number is exactly 10 digits
 phone_number_validator = RegexValidator(
     regex=r"^\d{10}$",
-    message="Phone number should be exactly 10 digits",
+    message="Phone number should be exactly 10 numeric digits",
     code="Invalid Phone number",
 )
 

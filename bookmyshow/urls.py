@@ -19,7 +19,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-
 from apps.base.views import CustomException
 
 urlpatterns = [
@@ -28,6 +27,7 @@ urlpatterns = [
     path("api/user/", include("apps.user.urls")),
     path("api/movies/", include("apps.movie.urls")),
     path("api/cinemas/", include("apps.cinema.urls")),
+    path("api/slots/", include("apps.slot.urls")),
 ]
 
 handler404 = CustomException.custom_404_view
