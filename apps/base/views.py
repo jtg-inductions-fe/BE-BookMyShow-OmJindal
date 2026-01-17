@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 from rest_framework.generics import ListAPIView
 
-from apps.base.models import Language, Genre
-from apps.base.serializers import LanguageSerializer, GenreSerializer
+from apps.base.models import Language, Genre, City
+from apps.base.serializers import LanguageSerializer, GenreSerializer, CitySerializer
 
 
 class CustomException:
@@ -36,3 +36,12 @@ class GenreListView(ListAPIView):
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+
+
+class CityListView(ListAPIView):
+    """
+    API view to retrieve the list of all available cities.
+    """
+
+    queryset = City.objects.all()
+    serializer_class = CitySerializer
