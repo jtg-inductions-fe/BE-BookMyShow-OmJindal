@@ -28,6 +28,7 @@ class Cinema(TimeStampedModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "address"], name="unique_cinema_at_each_address"
+                fields=["name", "address", "city"],
+                name="unique_cinema_at_each_address_and_city",
             )
         ]

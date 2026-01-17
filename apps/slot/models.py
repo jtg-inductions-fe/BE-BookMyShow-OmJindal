@@ -118,6 +118,8 @@ class Ticket(TimeStampedModel):
         return f"Ticket of {self.booking} for seat {self.seat_row}-{self.seat_column}"
 
     def clean(self):
+        if (self.seat_row == None) or (self.seat_column == None):
+            raise ValidationError("Missing required fields")
         cinema = self.booking.slot.cinema
         if self.seat_row > cinema.rows:
             raise ValidationError(
