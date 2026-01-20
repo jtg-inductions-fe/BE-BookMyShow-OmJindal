@@ -1,6 +1,7 @@
-from rest_framework import serializers
 from django.db import transaction
 from django.utils import timezone
+
+from rest_framework import serializers
 
 from apps.slot.models import Slot, Booking, Ticket
 from apps.cinema.models import Cinema
@@ -51,6 +52,7 @@ class SlotTicketSerializer(serializers.ModelSerializer):
             "id",
             "price",
             "start_time",
+            "language",
             "movie",
             "cinema",
             "tickets",

@@ -88,6 +88,7 @@ class BookingViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
                     "slot__cinema",
                     "slot__cinema__city",
                     "slot__movie",
+                    "slot__language",
                 )
             )
-        return Booking.objects.filter().select_related("slot")
+        return Booking.objects.select_related("slot")
