@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+
 from rest_framework.generics import ListAPIView
 from rest_framework.filters import SearchFilter
 

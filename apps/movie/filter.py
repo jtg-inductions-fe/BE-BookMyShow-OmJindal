@@ -1,6 +1,7 @@
+from datetime import timedelta
+
 import django_filters
 from django.utils import timezone
-from datetime import timedelta
 
 from apps.movie.models import Movie
 

@@ -1,12 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
+
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from apps.slot.models import Booking, Ticket, Slot
-from apps.movie.models import Movie
+from apps.slot.models import Booking, Slot
 from apps.cinema.models import Cinema
+from apps.slot.serializers import TicketSerializer
 
 User = get_user_model()
 
@@ -23,7 +24,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["name", "email", "phone_number", "password", "confirm_password"]
+        fields = ["name", "email", "password", "confirm_password"]
 
     def validate(self, attrs):
         email = attrs.get("email")
@@ -94,19 +95,6 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         return super().validate(attrs)
 
 
-class MovieSerializer(serializers.ModelSerializer):
-    """
-    Serializer for basic movie details.
-
-    Used to represent minimal movie information inside
-    nested serializers like SlotSerializer.
-    """
-
-    class Meta:
-        model = Movie
-        fields = ["id", "name", "duration", "poster", "description"]
-
-
 class CinemaSerializer(serializers.ModelSerializer):
     """
     Serializer for listing cinema information.
@@ -129,16 +117,11 @@ class SlotSerializer(serializers.ModelSerializer):
 
     cinema = CinemaSerializer()
     movie = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    language = serializers.SlugRelatedField(read_only=True, slug_field="name")
 
     class Meta:
         model = Slot
-        fields = ["movie", "cinema", "start_time"]
-
-
-class TicketSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = ["seat_row", "seat_column"]
+        fields = ["movie", "cinema", "start_time", "language"]
 
 
 class BookingHistorySerializer(serializers.ModelSerializer):

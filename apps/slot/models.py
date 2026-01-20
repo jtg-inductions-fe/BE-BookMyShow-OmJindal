@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from apps.movie.models import Movie
 from apps.cinema.models import Cinema
 from apps.user.models import User
-from apps.base.models import TimeStampedModel
+from apps.base.models import TimeStampedModel, Language
 
 
 class Slot(TimeStampedModel):
@@ -28,11 +28,20 @@ class Slot(TimeStampedModel):
     cinema = models.ForeignKey(
         Cinema, on_delete=models.CASCADE, related_name="slots_by_cinema"
     )
+    language = models.ForeignKey(
+        Language, on_delete=models.CASCADE, related_name="slots_by_language"
+    )
 
     def __str__(self):
         return f"Slot of {self.movie} in {self.cinema} between {self.start_time} and {self.end_time}"
 
     def clean(self):
+        if self.movie and self.language:
+            if not self.movie.languages.filter(id=self.language.id).exists():
+                raise ValidationError(
+                    {"language": "Selected language is not available for this movie."}
+                )
+
         overlapping_slots = Slot.objects.exclude(pk=self.pk).filter(
             movie=self.movie,
             cinema=self.cinema,

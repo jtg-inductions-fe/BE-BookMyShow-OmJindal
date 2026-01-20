@@ -11,20 +11,20 @@ class CinemaSerializer(serializers.ModelSerializer):
     basic details about a cinema along with its city information.
     """
 
-    city = serializers.CharField(source="city.name", read_only=True)
+    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
 
     class Meta:
         model = Cinema
         fields = [
             "id",
-            "name",
-            "address",
-            "city",
             "image",
+            "name",
+            "city",
+            "address",
         ]
 
 
-class CinemaDetailSerializer(serializers.ModelSerializer):
+class CinemaDetailSerializer(CinemaSerializer):
     """
     Serializer for detailed cinema information.
 
@@ -32,38 +32,47 @@ class CinemaDetailSerializer(serializers.ModelSerializer):
     movie slots available in the cinema.
     """
 
-    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
     movies = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Cinema
-        fields = [
-            "id",
-            "name",
-            "address",
-            "city",
-            "image",
-            "movies",
-        ]
+    class Meta(CinemaSerializer.Meta):
+        fields = CinemaSerializer.Meta.fields + ["movies"]
 
     def get_movies(self, cinema):
         movie_map = {}
 
         for slot in cinema.slots_by_cinema.all():
             movie = slot.movie
-
+            language = slot.language
             if movie.id not in movie_map:
                 movie_map[movie.id] = {
                     "movie": {
+                        "id": movie.id,
                         "name": movie.name,
                         "poster": movie.poster,
                         "duration": f"{movie.duration}",
+                        "genres": [
+                            {"id": g.id, "name": g.name} for g in movie.genres.all()
+                        ],
                     },
+                    "languages": {},
+                }
+
+            language_map = movie_map[movie.id]["languages"]
+
+            if language.id not in language_map:
+                language_map[language.id] = {
+                    "id": language.id,
+                    "name": language.name,
                     "slots": [],
                 }
 
-            movie_map[movie.id]["slots"].append(
-                {"id": slot.id, "start_time": slot.start_time}
+            language_map[language.id]["slots"].append(
+                {"id": slot.id, "start_time": slot.start_time, "price": slot.price}
             )
+
+        result = []
+        for movie_data in movie_map.values():
+            movie_data["languages"] = list(movie_data["languages"].values())
+            result.append(movie_data)
 
         return list(movie_map.values())

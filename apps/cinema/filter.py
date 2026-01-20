@@ -1,4 +1,5 @@
 import django_filters
+
 from apps.cinema.models import Cinema
 
 
