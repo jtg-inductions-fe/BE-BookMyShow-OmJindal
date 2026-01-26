@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('movie', '0002_rename_language_movie_languages'),
+        ("movie", "0002_rename_language_movie_languages"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='movie',
-            name='duration',
-            field=models.DurationField(help_text='HH:MM:SS'),
+            model_name="movie",
+            name="duration",
+            field=models.DurationField(help_text="HH:MM:SS"),
         ),
     ]

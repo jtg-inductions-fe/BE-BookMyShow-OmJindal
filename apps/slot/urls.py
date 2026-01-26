@@ -1,8 +1,7 @@
 from django.urls import path
 
-from apps.slot.views import SlotTicketRetrieveView, BookingCreationView
+from apps.slot import views as slot_views
 
 urlpatterns = [
-    path("<int:id>/", SlotTicketRetrieveView.as_view(), name="slot-ticket-detail"),
-    path("<int:id>/book/", BookingCreationView.as_view(), name="slot-booking"),
+    path("<int:pk>/", slot_views.SlotDetailView.as_view(), name="slot-detail"),
 ]

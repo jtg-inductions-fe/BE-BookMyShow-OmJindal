@@ -1,6 +1,6 @@
 from django.db import IntegrityError
 
-from apps.base.models import Language, City, Genre
+from apps.base.models import City, Genre, Language
 from apps.base.tests.utils import BaseTestUtils
 
 

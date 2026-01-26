@@ -1,47 +1,31 @@
-from django.db.models import Prefetch
-from django.shortcuts import get_object_or_404
+from rest_framework import generics as rest_generics
 
-from rest_framework.generics import RetrieveAPIView, CreateAPIView
-from rest_framework.permissions import IsAuthenticated
-
-from apps.slot.serializers import SlotTicketSerializer, BookingCreateSerializer
-from apps.slot.models import Slot, Booking
+from apps.slot import models as slot_models
+from apps.slot import serializers as slot_serializers
 
 
-class SlotTicketRetrieveView(RetrieveAPIView):
+class SlotDetailView(rest_generics.RetrieveAPIView):
     """
-    API view to retrieve a slot along with its confirmed bookings and tickets.
+    Detailed retrieval of a specific Slot including
+    its seats occupancy.
+
+    URL Parameters:
+        - pk (int): The unique identifier (Primary Key) of the Slot.
     """
 
-    serializer_class = SlotTicketSerializer
-    lookup_field = "id"
+    serializer_class = slot_serializers.SlotDetailSerializer
 
     def get_queryset(self):
+        """
+        Builds a optimized queryset for fetching slot occupancy data.
 
-        return Slot.objects.select_related(
-            "cinema", "movie", "cinema__city"
-        ).prefetch_related(
-            Prefetch(
-                "bookings_by_slot",
-                queryset=Booking.objects.filter(
-                    status=Booking.BookingStatus.CONFIRMED
-                ).prefetch_related("tickets_by_booking"),
-            )
-        )
+        Filter Logic:
+            Only includes 'tickets' from bookings where the status is 'BOOKED'.
+            Cancelled bookings are excluded from the occupancy list.
 
-
-class BookingCreationView(CreateAPIView):
-    """
-    API view to create a booking for a specific slot.
-    """
-
-    serializer_class = BookingCreateSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["slot"] = get_object_or_404(
-            Slot.objects.select_related("cinema"),
-            id=self.kwargs["id"],
-        )
-        return context
+        Returns:
+            QuerySet: Slot instances with complete details.
+        """
+        return slot_models.Slot.objects.select_related(
+            "cinema", "movie", "cinema__city", "language"
+        ).prefetch_related("cinema__seats")

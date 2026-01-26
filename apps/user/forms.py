@@ -1,9 +1,9 @@
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth import forms
 
-from apps.user.models import User
+from apps.user import models as user_models
 
 
-class CustomUserCreationForm(UserCreationForm):
+class CustomUserCreationForm(forms.UserCreationForm):
     """
     Form used in Django admin to create new users.
 
@@ -11,21 +11,30 @@ class CustomUserCreationForm(UserCreationForm):
     """
 
     class Meta:
-        model = User
-        fields = ("email", "name", "phone_number")
+        model = user_models.User
+        fields = (
+            "name",
+            "email",
+            "phone_number",
+            "city",
+            "profile_picture",
+            "is_staff",
+            "is_superuser",
+        )
 
 
-class CustomUserChangeForm(UserChangeForm):
+class CustomUserChangeForm(forms.UserChangeForm):
     """
     Form used in Django admin to update existing users.
     """
 
     class Meta:
-        model = User
+        model = user_models.User
         fields = (
             "email",
             "name",
             "phone_number",
+            "city",
             "profile_picture",
             "is_active",
             "is_staff",

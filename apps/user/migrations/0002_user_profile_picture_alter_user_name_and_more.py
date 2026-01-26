@@ -5,25 +5,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('user', '0001_initial'),
+        ("user", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='profile_picture',
-            field=models.ImageField(blank=True, null=True, upload_to='profile_pictures/'),
+            model_name="user",
+            name="profile_picture",
+            field=models.ImageField(blank=True, null=True, upload_to="profile_pictures/"),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='name',
+            model_name="user",
+            name="name",
             field=models.CharField(blank=True, max_length=50, null=True),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='phone_number',
-            field=models.CharField(blank=True, max_length=10, null=True, validators=[django.core.validators.RegexValidator(code='Invalid Phone number', message='Phone number should be exactly 10 digits', regex='^\\d{10}$')]),
+            model_name="user",
+            name="phone_number",
+            field=models.CharField(
+                blank=True,
+                max_length=10,
+                null=True,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        code="Invalid Phone number",
+                        message="Phone number should be exactly 10 digits",
+                        regex="^\\d{10}$",
+                    )
+                ],
+            ),
         ),
     ]

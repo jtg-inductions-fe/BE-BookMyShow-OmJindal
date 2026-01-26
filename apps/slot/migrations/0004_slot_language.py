@@ -5,17 +5,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('base', '0001_initial'),
-        ('slot', '0003_remove_booking_unique_booking_per_user_and_slot'),
+        ("base", "0001_initial"),
+        ("slot", "0003_remove_booking_unique_booking_per_user_and_slot"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='slot',
-            name='language',
-            field=models.ForeignKey(default=2, on_delete=django.db.models.deletion.CASCADE, related_name='slots_by_language', to='base.language'),
+            model_name="slot",
+            name="language",
+            field=models.ForeignKey(
+                default=2,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="slots_by_language",
+                to="base.language",
+            ),
             preserve_default=False,
         ),
     ]

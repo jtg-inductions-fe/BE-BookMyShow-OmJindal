@@ -2,61 +2,92 @@ from datetime import date as date_class
 
 from django.db.models import Prefetch
 from django.utils import timezone
+from rest_framework import exceptions as rest_exceptions
+from rest_framework import viewsets as rest_viewsets
 
-from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework.exceptions import ValidationError
-
-from apps.movie.models import Movie
-from apps.slot.models import Slot
-from apps.movie.serializers import (
-    MovieSerializer,
-    MovieDetailSerializer,
-)
-from apps.movie.filter import MovieFilter
-from apps.movie.pagination import MoviePagination
+from apps.movie import constants as movie_constants
+from apps.movie import filter as movie_filters
+from apps.movie import models as movie_models
+from apps.movie import pagination as movie_paginations
+from apps.movie import serializers as movie_serializers
+from apps.slot import models as slot_models
 
 
-class MovieViewSet(ReadOnlyModelViewSet):
+class MovieViewSet(rest_viewsets.ReadOnlyModelViewSet):
     """
-    View Set to fetch paginated list of movie and particular
-    movie based on filters
+    ViewSet for movie listings and detailed movie showtimes.
+
+    This ViewSet provides endpoints to browse the movies and check
+    specific showtime availability across different cinemas.
+
+    Actions:
+        list:
+            Returns a paginated list of movies. Supports filtering by
+            genre, language, cinemas, and release date.
+
+        retrieve:
+            Returns full data for a single movie along with
+            nested 'cinemas' containing showtime slots, filtered
+            by the 'city' and 'date' query parameters.
     """
 
-    pagination_class = MoviePagination
-    filterset_class = MovieFilter
+    pagination_class = movie_paginations.MoviePagination
+    filterset_class = movie_filters.MovieFilter
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return MovieSerializer
+        """
+        Determines which serializer to use based on the current action.
 
-        return MovieDetailSerializer
+        Returns:
+            list: MovieSerializer
+            retrieve: MovieDetailSerializer
+        """
+        if self.action == "list":
+            return movie_serializers.MovieSerializer
+        return movie_serializers.MovieDetailSerializer
 
     def get_queryset(self):
+        """
+        Dynamically builds the queryset based on the action and query parameters.
+
+        Raises:
+            ValidationError: If the 'date' parameter is in an invalid format.
+        """
         raw_date = self.request.query_params.get("date")
+
+        # Date Parsing Logic
         try:
-            if raw_date:
-                parsed_date = date_class.fromisoformat(raw_date)
-            else:
-                parsed_date = timezone.now().date()
+            parsed_date = date_class.fromisoformat(raw_date) if raw_date else timezone.now().date()
         except ValueError:
-            raise ValidationError({"date": "Invalid date format. Use YYYY-MM-DD."})
-
-        if self.action == "retrieve":
-            city = self.request.query_params.get("city")
-            slots_qs = Slot.objects.filter(
-                start_time__gt=timezone.now(), start_time__date=parsed_date
-            ).select_related("cinema", "cinema__city", "language")
-
-            if city:
-                slots_qs = slots_qs.filter(cinema__city_id=city)
-
-            return Movie.objects.prefetch_related(
-                Prefetch("slots_by_movie", queryset=slots_qs), "genres", "languages"
+            raise rest_exceptions.ValidationError(
+                {"date": movie_constants.ErrorMessages.INVALID_DATE_FORMAT}
             )
 
-        qs = Movie.objects.all()
+        # Detail View Query (Retrieve)
+        if self.action == "retrieve":
+            city_id = self.request.query_params.get("city")
 
+            # Filter slots for the specific date and future times
+            slots_qs = (
+                slot_models.Slot.objects.filter(
+                    start_time__gt=timezone.now(), start_time__date=parsed_date
+                )
+                .select_related("cinema", "cinema__city", "language")
+                .order_by("start_time")
+            )
+
+            if city_id:
+                slots_qs = slots_qs.filter(cinema__city_id=city_id)
+
+            return movie_models.Movie.objects.prefetch_related(
+                Prefetch("slots", queryset=slots_qs),
+                "genres",
+                "languages",
+            )
+
+        # List View Query (List)
+        qs = movie_models.Movie.objects.all()
         if raw_date:
-            qs = qs.filter(slots_by_movie__start_time__date=raw_date)
+            qs = qs.filter(slots__start_time__date=raw_date)
 
-        return qs.prefetch_related("genres", "languages")
+        return qs.prefetch_related("genres", "languages").distinct()

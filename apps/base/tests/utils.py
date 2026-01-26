@@ -1,15 +1,15 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
-
 from rest_framework.test import APITestCase
 
-from apps.base.models import City, Language, Genre
+from apps.base.models import City, Genre, Language
+from apps.booking.models import Booking, Ticket
 from apps.cinema.models import Cinema
 from apps.movie.models import Movie
-from apps.slot.models import Slot, Booking, Ticket
+from apps.slot.models import Slot
 
 User = get_user_model()
 

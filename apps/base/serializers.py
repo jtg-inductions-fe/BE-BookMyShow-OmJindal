@@ -1,33 +1,33 @@
-from rest_framework import serializers
+from rest_framework import serializers as rest_serializers
 
-from apps.base.models import Language, City, Genre
+from apps.base import models as base_models
 
 
-class LanguageSerializer(serializers.ModelSerializer):
+class LanguageSerializer(rest_serializers.ModelSerializer):
     """
     Serializer for Language model.
     """
 
     class Meta:
-        model = Language
+        model = base_models.Language
         fields = ["id", "name"]
 
 
-class CitySerializer(serializers.ModelSerializer):
+class CitySerializer(rest_serializers.ModelSerializer):
     """
     Serializer for City model.
     """
 
     class Meta:
-        model = City
+        model = base_models.City
         fields = ["id", "name"]
 
 
-class GenreSerializer(serializers.ModelSerializer):
+class GenreSerializer(rest_serializers.ModelSerializer):
     """
     Serializer for Genre model.
     """
 
     class Meta:
-        model = Genre
+        model = base_models.Genre
         fields = ["id", "name"]

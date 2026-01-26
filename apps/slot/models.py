@@ -1,148 +1,99 @@
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models as db_models
+from django.utils import timezone
 
-from apps.movie.models import Movie
-from apps.cinema.models import Cinema
-from apps.user.models import User
-from apps.base.models import TimeStampedModel, Language
+from apps.base import models as base_models
+from apps.cinema import models as cinema_models
+from apps.movie import models as movie_models
+from apps.slot import constant as slot_constants
 
 
-class Slot(TimeStampedModel):
+class Slot(base_models.TimeStampedModel):
     """
     Represents a specific movie screening time in a cinema hall.
 
     Attributes:
-        price (int) : The ticket price for this specific show.
-        start_time (datetime) : The date and time when the movie starts.
-        end_time (datetime) : The date and time when the movie ends.
-        movie (ForeignKey) : The movie being screened.
-        cinema (ForeignKey) : The cinema hall where the movie is screened.
+        price (int): The ticket price for this specific show.
+        start_time (datetime): The date and time when the movie starts.
+        end_time (datetime): The date and time when the movie ends.
+        movie (ForeignKey): Reference to the Movie being screened.
+        cinema (ForeignKey): Reference to the Cinema hosting the show.
+        language (ForeignKey): The specific language version for this screening.
     """
 
-    price = models.PositiveIntegerField()
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    movie = models.ForeignKey(
-        Movie, on_delete=models.CASCADE, related_name="slots_by_movie"
+    price = db_models.PositiveIntegerField()
+    start_time = db_models.DateTimeField()
+    end_time = db_models.DateTimeField()
+    movie = db_models.ForeignKey(
+        movie_models.Movie, on_delete=db_models.CASCADE, related_name="slots"
     )
-    cinema = models.ForeignKey(
-        Cinema, on_delete=models.CASCADE, related_name="slots_by_cinema"
+    cinema = db_models.ForeignKey(
+        cinema_models.Cinema,
+        on_delete=db_models.CASCADE,
+        related_name="slots",
     )
-    language = models.ForeignKey(
-        Language, on_delete=models.CASCADE, related_name="slots_by_language"
+    language = db_models.ForeignKey(
+        base_models.Language,
+        on_delete=db_models.CASCADE,
+        related_name="slots",
     )
+
+    class Meta:
+        """
+        Meta options for Slot.
+        """
+
+        constraints = [
+            # Checks end_time should be greater than start_time
+            db_models.CheckConstraint(
+                check=db_models.Q(end_time__gt=db_models.F("start_time")),
+                name="slot_end_after_start",
+            ),
+            db_models.UniqueConstraint(
+                fields=["cinema", "start_time"],
+                name="unique_slot_per_cinema_time",
+            ),
+        ]
 
     def __str__(self):
-        return f"Slot of {self.movie} in {self.cinema} between {self.start_time} and {self.end_time}"
+        """
+        Returns a string representation of the showtime slot.
+        """
+        return f"{self.movie.name} at {self.cinema.name} in {self.language}"
 
     def clean(self):
+        """
+        Validates the slot's business logic before saving.
+
+        Checks for language availability, cinema hall overlaps,
+        movie duration alignment, and release date consistency.
+
+        Raises:
+            ValidationError: If any business rule is violated.
+        """
+        # 1. Validate Language availability for the Movie
         if self.movie and self.language:
             if not self.movie.languages.filter(id=self.language.id).exists():
-                raise ValidationError(
-                    {"language": "Selected language is not available for this movie."}
-                )
+                raise ValidationError({slot_constants.ErrorMessages.INVALID_LANGUAGE})
 
+        # 2. Prevent overlapping slots in the SAME CINEMA (any movie)
         overlapping_slots = Slot.objects.exclude(pk=self.pk).filter(
-            movie=self.movie,
             cinema=self.cinema,
             start_time__lt=self.end_time,
             end_time__gt=self.start_time,
         )
 
         if overlapping_slots.exists():
-            raise ValidationError(
-                "This slot overlaps with an existing slot for the same movie in this cinema."
-            )
+            raise ValidationError(slot_constants.ErrorMessages.OVERLAPPING_SCHEDULE)
 
-        running_time = self.end_time - self.start_time
-        if running_time < self.movie.duration:
-            raise ValidationError(
-                "The running time of the slot must be greater than or equal to duration of the movie."
-            )
+        # 3. Ensure duration is sufficient
+        if self.movie and (self.end_time - self.start_time) < self.movie.duration:
+            raise ValidationError(slot_constants.ErrorMessages.DURATION_TOO_SHORT)
 
-        slot_start_date = self.start_time.date()
-        if self.movie.release_date > slot_start_date:
-            raise ValidationError(
-                "The movie start_time cannot be set before movie release date."
-            )
+        # 4. Check against Release Date
+        if self.movie and self.start_time.date() < self.movie.release_date:
+            raise ValidationError(slot_constants.ErrorMessages.BEFORE_RELEASE_DATE)
 
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(end_time__gt=models.F("start_time")),
-                name="slot_end_after_start",
-            ),
-            models.UniqueConstraint(
-                fields=["movie", "cinema", "start_time"],
-                name="unique_slot_per_cinema_and_movie",
-            ),
-        ]
-
-
-class Booking(TimeStampedModel):
-    """
-    Represents a reservation made by a user for a specific movie slot.
-
-    Attributes:
-        user (ForeignKey) : The user who is making the booking.
-        slot (ForeignKey) : The specific showtime slot being booked.
-        status (str) : The current state of the booking (Confirmed or Cancelled)
-    """
-
-    class BookingStatus(models.TextChoices):
-        CONFIRMED = "CONFIRMED", ("Confirmed")
-        CANCELLED = "CANCELLED", ("Cancelled")
-
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="bookings_by_user"
-    )
-    slot = models.ForeignKey(
-        Slot, on_delete=models.CASCADE, related_name="bookings_by_slot"
-    )
-    status = models.CharField(
-        max_length=20, choices=BookingStatus.choices, default=BookingStatus.CONFIRMED
-    )
-
-    def __str__(self):
-        return f"Booking of {self.user} for {self.slot}"
-
-
-class Ticket(TimeStampedModel):
-    """
-    Represents an individual seat reserved under a booking.
-
-    Attributes:
-        seat_row (int) : The row number of the reserved seat.
-        seat_column (int) : The column number in that specific row.
-        booking (ForeignKey) : The booking to which this ticket belongs.
-    """
-
-    seat_row = models.PositiveSmallIntegerField()
-    seat_column = models.PositiveSmallIntegerField()
-    booking = models.ForeignKey(
-        Booking, on_delete=models.CASCADE, related_name="tickets_by_booking"
-    )
-
-    def __str__(self):
-        return f"Ticket of {self.booking} for seat {self.seat_row}-{self.seat_column}"
-
-    def clean(self):
-        if (self.seat_row == None) or (self.seat_column == None):
-            raise ValidationError("Missing required fields")
-        cinema = self.booking.slot.cinema
-        if self.seat_row > cinema.rows:
-            raise ValidationError(
-                f"Seat row {self.seat_row} exceeds cinema capacity of {cinema.rows} rows."
-            )
-        if self.seat_column > cinema.seats_per_row:
-            raise ValidationError(
-                f"Seat column {self.seat_column} exceeds cinema capacity of {cinema.seats_per_row} seats per row."
-            )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["seat_row", "seat_column", "booking"],
-                name="unique_seat_per_booking",
-            )
-        ]
+        # 5. Prevent creation of slot in past
+        if self.start_time < timezone.now():
+            raise ValidationError(slot_constants.ErrorMessages.PAST_START_TIME)

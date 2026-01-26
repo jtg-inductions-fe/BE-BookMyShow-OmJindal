@@ -1,8 +1,7 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.urls import reverse
 from django.utils import timezone
-
 from rest_framework import status
 
 from apps.base.tests.utils import BaseTestUtils
@@ -14,12 +13,8 @@ class MovieListViewTests(BaseTestUtils):
     """
 
     def test_movie_list_returns_movies(self):
-        self.movie1 = self.create_movie(
-            data={"name": "Movie A", "release_date": date(2010, 1, 1)}
-        )
-        self.movie2 = self.create_movie(
-            data={"name": "Movie B", "release_date": date(2020, 1, 1)}
-        )
+        self.movie1 = self.create_movie(data={"name": "Movie A", "release_date": date(2010, 1, 1)})
+        self.movie2 = self.create_movie(data={"name": "Movie B", "release_date": date(2020, 1, 1)})
         response = self.client.get(reverse("movie-list"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = response.data["results"]
@@ -35,21 +30,14 @@ class MovieListViewFilterTests(BaseTestUtils):
     """
 
     def test_movie_list_returns_filtered_movies(self):
-
         self.genre1 = self.create_genre(data={"name": "Actionable"})
         self.genre2 = self.create_genre(data={"name": "Scientific"})
         self.language1 = self.create_language(data={"name": "Spanish"})
         self.language2 = self.create_language(data={"name": "French"})
 
-        self.movie1 = self.create_movie(
-            data={"name": "Movie A", "release_date": date(2026, 1, 10)}
-        )
-        self.movie2 = self.create_movie(
-            data={"name": "Movie B", "release_date": date(2026, 1, 5)}
-        )
-        self.movie3 = self.create_movie(
-            data={"name": "Movie C", "release_date": date(2026, 1, 1)}
-        )
+        self.movie1 = self.create_movie(data={"name": "Movie A", "release_date": date(2026, 1, 10)})
+        self.movie2 = self.create_movie(data={"name": "Movie B", "release_date": date(2026, 1, 5)})
+        self.movie3 = self.create_movie(data={"name": "Movie C", "release_date": date(2026, 1, 1)})
 
         self.movie1.genres.add(self.genre1, self.genre2)
         self.movie1.languages.add(self.language1, self.language2)

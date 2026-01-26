@@ -5,15 +5,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('user', '0002_user_profile_picture_alter_user_name_and_more'),
+        ("user", "0002_user_profile_picture_alter_user_name_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='phone_number',
-            field=models.CharField(blank=True, max_length=10, null=True, validators=[django.core.validators.RegexValidator(code='Invalid Phone number', message='Phone number should be exactly 10 numeric digits', regex='^\\d{10}$')]),
+            model_name="user",
+            name="phone_number",
+            field=models.CharField(
+                blank=True,
+                max_length=10,
+                null=True,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        code="Invalid Phone number",
+                        message="Phone number should be exactly 10 numeric digits",
+                        regex="^\\d{10}$",
+                    )
+                ],
+            ),
         ),
     ]

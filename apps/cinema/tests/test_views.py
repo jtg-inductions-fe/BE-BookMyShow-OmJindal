@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from django.urls import reverse
 from django.utils import timezone
-
 from rest_framework import status
 
 from apps.base.tests.utils import BaseTestUtils
@@ -74,9 +73,7 @@ class CinemaDetailViewFTests(BaseTestUtils):
             data={"start_time": timezone.now()},
         )
 
-        response = self.client.get(
-            reverse("cinemas-detail", args=[self.cinema_object.id])
-        )
+        response = self.client.get(reverse("cinemas-detail", args=[self.cinema_object.id]))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

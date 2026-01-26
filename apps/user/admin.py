@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from apps.user.models import User
-from apps.user.forms import CustomUserChangeForm, CustomUserCreationForm
+from apps.user import forms as user_forms
+from apps.user import models as user_models
 
 
-@admin.register(User)
+@admin.register(user_models.User)
 class CustomUserAdmin(UserAdmin):
     """
     Custom admin configuration for User model.
@@ -14,9 +14,9 @@ class CustomUserAdmin(UserAdmin):
     and admin interface customization.
     """
 
-    model = User
-    add_form = CustomUserCreationForm
-    form = CustomUserChangeForm
+    model = user_models.User
+    add_form = user_forms.CustomUserCreationForm
+    form = user_forms.CustomUserChangeForm
 
     list_display = ("email", "name", "is_active", "is_staff")
     search_fields = ["email", "name"]
