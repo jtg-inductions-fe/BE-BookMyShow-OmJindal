@@ -1,9 +1,8 @@
 from django.urls import reverse
-
 from rest_framework import status
 
 from apps.base.tests.utils import BaseTestUtils
-from apps.slot.models import Booking
+from apps.booking.models import Booking
 
 
 class SignupViewTests(BaseTestUtils):

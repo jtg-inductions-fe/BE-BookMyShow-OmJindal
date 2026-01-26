@@ -1,5 +1,4 @@
 from django.urls import reverse
-
 from rest_framework import status
 
 from apps.base.tests.utils import BaseTestUtils
@@ -35,7 +34,6 @@ class SlotRetrieveViewTests(BaseTestUtils):
 
 
 class CreateBookingViewTests(BaseTestUtils):
-
     def setUp(self):
         super().setUp()
         self.create_user()
@@ -59,9 +57,7 @@ class CreateBookingViewTests(BaseTestUtils):
         """
         Unauthenticated user cannot create booking
         """
-        response = self.client.post(
-            reverse("slot-booking", kwargs={"id": self.slot_object.id})
-        )
+        response = self.client.post(reverse("slot-booking", kwargs={"id": self.slot_object.id}))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_booking_empty_body(self):

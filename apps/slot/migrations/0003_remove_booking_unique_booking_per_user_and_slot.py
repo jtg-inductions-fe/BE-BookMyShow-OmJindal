@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('slot', '0002_initial'),
+        ("slot", "0002_initial"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='booking',
-            name='unique_booking_per_user_and_slot',
+            model_name="booking",
+            name="unique_booking_per_user_and_slot",
         ),
     ]

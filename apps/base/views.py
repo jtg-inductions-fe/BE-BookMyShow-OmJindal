@@ -1,51 +1,46 @@
-from django.http import JsonResponse
+from rest_framework import filters as rest_filters
+from rest_framework import generics as rest_generics
 
-from rest_framework.generics import ListAPIView
-from rest_framework.filters import SearchFilter
-
-from apps.base.models import Language, Genre, City
-from apps.base.serializers import LanguageSerializer, GenreSerializer, CitySerializer
+from apps.base import models as base_models
+from apps.base import serializers as base_serializers
 
 
-class CustomException:
-    @staticmethod
-    def custom_404_view(request, exception=None):
-        return JsonResponse(
-            {"status": "Failed", "message": "The requested resource was not found"},
-            status=404,
-        )
-
-    @staticmethod
-    def custom_500_view(request):
-        return JsonResponse(
-            {"status": "Failed", "message": "Internal Server Error"}, status=500
-        )
-
-
-class LanguageListView(ListAPIView):
+class LanguageListView(rest_generics.ListAPIView):
     """
-    API view to retrieve the list of all available languages.
+    API view to retrieve a list of all languages.
+
+    Returns:
+        HTTP 200: A list of language objects.
     """
 
-    queryset = Language.objects.all()
-    serializer_class = LanguageSerializer
+    queryset = base_models.Language.objects.all()
+    serializer_class = base_serializers.LanguageSerializer
 
 
-class GenreListView(ListAPIView):
+class GenreListView(rest_generics.ListAPIView):
     """
-    API view to retrieve the list of all available genres.
-    """
+    API view to retrieve a list of all genres.
 
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-
-
-class CityListView(ListAPIView):
-    """
-    API view to retrieve the list of all available cities.
+    Returns:
+        HTTP 200: A list of genre objects.
     """
 
-    queryset = City.objects.all()
-    serializer_class = CitySerializer
-    filter_backends = [SearchFilter]
+    queryset = base_models.Genre.objects.all()
+    serializer_class = base_serializers.GenreSerializer
+
+
+class CityListView(rest_generics.ListAPIView):
+    """
+    API view to retrieve a list of all cities.
+
+    Query Parameters:
+        search (str): Optional. Filter cities by name (e.g., /cities/?search=Mum).
+
+    Returns:
+        HTTP 200: A list of city objects matching the search criteria.
+    """
+
+    queryset = base_models.City.objects.all()
+    serializer_class = base_serializers.CitySerializer
+    filter_backends = [rest_filters.SearchFilter]
     search_fields = ["name"]

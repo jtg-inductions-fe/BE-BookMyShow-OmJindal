@@ -1,8 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from apps.movie.models import Movie
 from apps.base.tests.utils import BaseTestUtils
+from apps.movie.models import Movie
 
 
 class MovieModelTests(BaseTestUtils):

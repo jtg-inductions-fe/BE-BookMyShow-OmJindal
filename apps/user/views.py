@@ -1,94 +1,39 @@
-from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import ListModelMixin, UpdateModelMixin
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import status
+from rest_framework import generics as rest_generics
+from rest_framework import permissions as rest_permissions
 
-from apps.user.serializers import (
-    SignUpSerializer,
-    UserProfileSerializer,
-    ProfileUpdateSerializer,
-    BookingHistorySerializer,
-    BookingCancelSerializer,
-)
-from apps.user.permission import IsOwnerOrReadOnly
-from apps.slot.models import Booking
+from apps.user import serializers as user_serializers
 
 
-class SignupView(CreateAPIView):
+class SignupView(rest_generics.CreateAPIView):
     """
-    API view to create user's profile and return
-    JWT refresh and access tokens
+    Register a new user and receive authentication tokens.
+
+    This endpoint creates a new user record in the database. Upon successful
+    registration, it automatically generates and returns a JSON Web Token (JWT)
+    pair (access and refresh), allowing the user to be logged in immediately.
     """
 
-    serializer_class = SignUpSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response(
-            {
-                "user": serializer.data,
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-            },
-            status=status.HTTP_201_CREATED,
-        )
+    serializer_class = user_serializers.SignUpSerializer
 
 
-class ProfileView(RetrieveUpdateAPIView):
+class ProfileView(rest_generics.RetrieveUpdateAPIView):
     """
     API view to retrieve and update authenticated user's profile.
+
+    Permissions:
+        - IsAuthenticated: Only users with a valid JWT token can access this view.
+
+    Methods Allowed:
+        - GET: Retrieve profile details.
+        - PATCH: Update specific profile fields.
     """
 
-    permission_classes = [IsAuthenticated]
+    serializer_class = user_serializers.UserSerializer
+    permission_classes = [rest_permissions.IsAuthenticated]
     http_method_names = ["get", "patch"]
-
-    def get_serializer_class(self):
-        """
-        Return serializer based on HTTP method.
-        """
-        if self.request.method == "PATCH":
-            return ProfileUpdateSerializer
-        return UserProfileSerializer
 
     def get_object(self):
         """
-        Return the currently authenticated user.
+        Overrides the default behavior to return the currently logged-in user.
         """
         return self.request.user
-
-
-class BookingViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
-    """
-    ViewSet to handle:
-    - Listing bookings of authenticated user.
-    - Cancelling a specific booking
-    """
-
-    permission_classes = [IsOwnerOrReadOnly]
-    http_method_names = ["get", "patch"]
-
-    def get_serializer_class(self):
-        if self.action == "partial_update":
-            return BookingCancelSerializer
-        return BookingHistorySerializer
-
-    def get_queryset(self):
-        if self.action == "list":
-            return (
-                Booking.objects.filter(user=self.request.user)
-                .prefetch_related("tickets_by_booking")
-                .select_related(
-                    "slot",
-                    "slot__cinema",
-                    "slot__cinema__city",
-                    "slot__movie",
-                    "slot__language",
-                )
-            )
-        return Booking.objects.select_related("slot")

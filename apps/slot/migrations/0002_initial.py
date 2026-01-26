@@ -6,56 +6,86 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('cinema', '0001_initial'),
-        ('movie', '0001_initial'),
-        ('slot', '0001_initial'),
+        ("cinema", "0001_initial"),
+        ("movie", "0001_initial"),
+        ("slot", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='booking',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bookings_by_user', to=settings.AUTH_USER_MODEL),
+            model_name="booking",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="bookings_by_user",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='slot',
-            name='cinema',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='slots_by_cinema', to='cinema.cinema'),
+            model_name="slot",
+            name="cinema",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="slots_by_cinema",
+                to="cinema.cinema",
+            ),
         ),
         migrations.AddField(
-            model_name='slot',
-            name='movie',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='slots_by_movie', to='movie.movie'),
+            model_name="slot",
+            name="movie",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="slots_by_movie",
+                to="movie.movie",
+            ),
         ),
         migrations.AddField(
-            model_name='booking',
-            name='slot',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bookings_by_slot', to='slot.slot'),
+            model_name="booking",
+            name="slot",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="bookings_by_slot",
+                to="slot.slot",
+            ),
         ),
         migrations.AddField(
-            model_name='ticket',
-            name='booking',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tickets_by_booking', to='slot.booking'),
+            model_name="ticket",
+            name="booking",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="tickets_by_booking",
+                to="slot.booking",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='slot',
-            constraint=models.CheckConstraint(condition=models.Q(('end_time__gt', models.F('start_time'))), name='slot_end_after_start'),
+            model_name="slot",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("end_time__gt", models.F("start_time"))),
+                name="slot_end_after_start",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='slot',
-            constraint=models.UniqueConstraint(fields=('movie', 'cinema', 'start_time'), name='unique_slot_per_cinema_and_movie'),
+            model_name="slot",
+            constraint=models.UniqueConstraint(
+                fields=("movie", "cinema", "start_time"),
+                name="unique_slot_per_cinema_and_movie",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='booking',
-            constraint=models.UniqueConstraint(fields=('user', 'slot'), name='unique_booking_per_user_and_slot'),
+            model_name="booking",
+            constraint=models.UniqueConstraint(
+                fields=("user", "slot"), name="unique_booking_per_user_and_slot"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='ticket',
-            constraint=models.UniqueConstraint(fields=('seat_row', 'seat_column', 'booking'), name='unique_seat_per_booking'),
+            model_name="ticket",
+            constraint=models.UniqueConstraint(
+                fields=("seat_row", "seat_column", "booking"),
+                name="unique_seat_per_booking",
+            ),
         ),
     ]

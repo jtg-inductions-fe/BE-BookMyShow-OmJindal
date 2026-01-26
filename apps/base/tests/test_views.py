@@ -1,5 +1,4 @@
 from django.urls import reverse
-
 from rest_framework import status
 
 from apps.base.tests.utils import BaseTestUtils
@@ -9,6 +8,7 @@ class LanguageListViewTests(BaseTestUtils):
     """
     LanguageListViewTests should return list of languages
     """
+
     def setUp(self):
         super().setUp()
         self.create_language({"name": "Spanish"})
@@ -27,6 +27,7 @@ class GenreListViewTests(BaseTestUtils):
     """
     LanguageListViewTests should return list of genres
     """
+
     def setUp(self):
         super().setUp()
         self.create_genre({"name": "Horror"})
@@ -45,6 +46,7 @@ class CityListViewTests(BaseTestUtils):
     """
     LanguageListViewTests should return list of cities
     """
+
     def setUp(self):
         super().setUp()
         self.create_city({"name": "Lucknow"})

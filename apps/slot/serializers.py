@@ -1,157 +1,88 @@
-from django.db import transaction
-from django.utils import timezone
+from rest_framework import serializers as rest_serializers
 
-from rest_framework import serializers
+from apps.booking import constants as booking_constants
+from apps.booking import models as booking_models
+from apps.cinema import models as cinema_models
+from apps.slot import models as slot_models
 
-from apps.slot.models import Slot, Booking, Ticket
-from apps.cinema.models import Cinema
 
-
-class TicketSerializer(serializers.ModelSerializer):
+class SeatSerializer(rest_serializers.ModelSerializer):
     """
-    Serializer for individual movie tickets.
+    Serializer for individual booked seats.
 
-    Represents a booked seat using its row and column
-    inside a cinema hall.
+    Provides the specific coordinates of a seat within
+    the cinema's grid layout.
     """
 
     class Meta:
-        model = Ticket
-        fields = ["seat_row", "seat_column"]
+        model = cinema_models.Seat
+        fields = ["row_number", "seat_number"]
 
 
-class CinemaSerializer(serializers.ModelSerializer):
+class CinemaLayoutSerializer(rest_serializers.ModelSerializer):
     """
-    Serializer for listing cinema information.
+    Serializer to provide the physical layout of a
+    cinema with basic information.
     """
 
-    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    city = rest_serializers.SlugRelatedField(read_only=True, slug_field="name")
 
     class Meta:
-        model = Cinema
+        model = cinema_models.Cinema
         fields = ["name", "city", "rows", "seats_per_row"]
 
 
-class SlotTicketSerializer(serializers.ModelSerializer):
+class SlotDetailSerializer(rest_serializers.ModelSerializer):
     """
-    Serializer for a movie slot along with its booked tickets.
+    Detailed serializer for a Movie Slot and its occupancy.
 
-    Includes:
-    - Slot details (time and price)
-    - Related movie and cinema information
-    - All tickets booked under CONFIRMED bookings for the slot
+    Provides showtime data and a list of all seats already
+    booked.
+
+    Attributes:
+        tickets (SerializerMethodField): A flattened list of all booked seats.
+        cinema (CinemaLayoutSerializer): The physical details of the venue.
+        movie (SlugRelatedField): The title of the movie being screened.
+        language (SlugRelatedField): The name of the language in which the show is screened.
     """
 
-    tickets = serializers.SerializerMethodField()
-    cinema = CinemaSerializer()
-    movie = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    seats = rest_serializers.SerializerMethodField()
+    cinema = CinemaLayoutSerializer()
+    movie = rest_serializers.SlugRelatedField(read_only=True, slug_field="name")
+    language = rest_serializers.SlugRelatedField(read_only=True, slug_field="name")
 
     class Meta:
-        model = Slot
+        model = slot_models.Slot
         fields = [
-            "id",
             "price",
             "start_time",
             "language",
             "movie",
             "cinema",
-            "tickets",
+            "seats",
         ]
 
-    def get_tickets(self, slot):
-        tickets = []
-        for booking in slot.bookings_by_slot.all():
-            tickets.extend(booking.tickets_by_booking.all())
-
-        return TicketSerializer(tickets, many=True).data
-
-
-class BookingCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer to handle booking creation.
-
-    Accepts seat details, validates seat uniqueness,
-    checks availability, and creates a confirmed booking
-    along with its tickets atomically.
-    """
-
-    seats = TicketSerializer(many=True, write_only=True)
-
-    class Meta:
-        model = Booking
-        fields = ["seats", "id", "status"]
-
-    def validate(self, attrs):
-        seats = attrs["seats"]
-
-        slot = self.context["slot"]
-        cinema = slot.cinema
-
-        if timezone.now() >= slot.start_time:
-            raise serializers.ValidationError(
-                {"detail": "Cannot book a slot that has already started or ended."}
-            )
-
-        if len(seats) == 0:
-            raise serializers.ValidationError({"seats": "Cannot be empty."})
-
-        seat_keys = [(s["seat_row"], s["seat_column"]) for s in seats]
-
-        if len(seat_keys) != len(set(seat_keys)):
-            raise serializers.ValidationError(
-                {"seats": "Duplicate seats are not allowed"}
-            )
-
-        booked_seats = set(
-            Ticket.objects.filter(
-                booking__slot=slot,
-                booking__status=Booking.BookingStatus.CONFIRMED,
-            ).values_list("seat_row", "seat_column")
+    def get_seats(self, slot):
+        """
+        Calculates availability for every seat in the cinema for this specific slot.
+        """
+        # 1. Get IDs of all seats already booked for this slot
+        booked_seat_ids = set(
+            booking_models.Ticket.objects.filter(
+                booking__slot=slot, booking__status=booking_constants.BookingStatus.BOOKED
+            ).values_list("cinema_seat_id", flat=True)
         )
 
-        invalid_seats = booked_seats & set(seat_keys)
+        # 2. Fetch all physical seats for this cinema
+        all_cinema_seats = slot.cinema.seats.all()
 
-        conflict = []
-
-        for row, column in seat_keys:
-            if (row > cinema.rows) or (column > cinema.seats_per_row):
-                conflict.append(
-                    f"seat_row:{row}, seat_column:{column} exceeds cinema capacity of {cinema.rows} rows and {cinema.seats_per_row} columns"
-                )
-            if (row, column) in invalid_seats:
-                conflict.append(
-                    f"seat_row:{row}, seat_column:{column} is already booked."
-                )
-
-        if conflict:
-            raise serializers.ValidationError({"seats": conflict})
-
-        return attrs
-
-    def create(self, validated_data):
-        request = self.context["request"]
-        slot = self.context["slot"]
-        user = request.user
-        seats = validated_data.pop("seats")
-
-        requested_seats = {(s["seat_row"], s["seat_column"]) for s in seats}
-
-        with transaction.atomic():
-            booking = Booking.objects.create(
-                user=user,
-                slot=slot,
-                status=Booking.BookingStatus.CONFIRMED,
-            )
-
-            Ticket.objects.bulk_create(
-                [
-                    Ticket(
-                        booking=booking,
-                        seat_row=row,
-                        seat_column=col,
-                    )
-                    for row, col in requested_seats
-                ]
-            )
-
-        return booking
+        # 3. Combine data into a flat list for the frontend
+        return [
+            {
+                "id": seat.id,
+                "row_number": seat.row_number,
+                "seat_number": seat.seat_number,
+                "is_available": seat.id not in booked_seat_ids,
+            }
+            for seat in all_cinema_seats
+        ]

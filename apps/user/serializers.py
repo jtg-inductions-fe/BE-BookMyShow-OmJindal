@@ -1,177 +1,126 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
-from django.utils import timezone
-
-from rest_framework import serializers
+from django.contrib.auth.password_validation import (
+    validate_password as django_validate_password,
+)
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from rest_framework import serializers as rest_serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.slot.models import Booking, Slot
-from apps.cinema.models import Cinema
-from apps.slot.serializers import TicketSerializer
+from apps.user import constants as user_constants
 
 User = get_user_model()
 
 
-class SignUpSerializer(serializers.ModelSerializer):
+class SignUpSerializer(rest_serializers.ModelSerializer):
     """
-    Serializer for user registration.
+    Serializer for handling new user registration.
 
-    Handles validation and creation of a new user account.
+    This serializer manages the creation of new user accounts, ensuring
+    password security through Django's standard validation framework and
+    automated JWT token generation upon successful creation.
     """
 
-    password = serializers.CharField(write_only=True)
-    confirm_password = serializers.CharField(write_only=True)
+    password = rest_serializers.CharField(write_only=True)
+    confirm_password = rest_serializers.CharField(write_only=True)
+    access = rest_serializers.CharField(read_only=True)
+    refresh = rest_serializers.CharField(read_only=True)
 
     class Meta:
+        """
+        Meta options for SignUpSerializer.
+        """
+
         model = User
-        fields = ["name", "email", "password", "confirm_password"]
+        fields = ["name", "email", "password", "confirm_password", "access", "refresh"]
+
+    def to_internal_value(self, data):
+        """
+        Normalize the email address before any validation occurs.
+        """
+        resource_data = data.copy()
+        if "email" in resource_data:
+            resource_data["email"] = resource_data["email"].lower().strip()
+        return super().to_internal_value(resource_data)
+
+    def validate_password(self, value):
+        """
+        Validation for password strength.
+        """
+        django_validate_password(value)
+        return value
 
     def validate(self, attrs):
-        email = attrs.get("email")
-        email = email.lower()
-
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError({"email": "Already exist"})
-
-        password = attrs.get("password")
-        confirm_password = attrs.get("confirm_password")
-
-        if password != confirm_password:
-            raise serializers.ValidationError(
-                {"confirm_password": "Passwords do not match"}
-            )
-
-        validate_password(password)
+        """
+        Validation for cross-field checks.
+        """
+        if attrs["password"] != attrs["confirm_password"]:
+            raise ValidationError(user_constants.ErrorMessages.PASSWORD_MISMATCH)
         return attrs
 
     def create(self, validated_data):
+        """
+        Creates a new User instance using the custom UserManager
+        and add JWT tokens.
+        """
         validated_data.pop("confirm_password")
-        return User.objects.create_user(**validated_data)
+        try:
+            # Create the user using the manager to ensure password hashing
+            user = User.objects.create_user(**validated_data)
+            # Generate refresh token
+            refresh = RefreshToken.for_user(user)
+            user.access = str(refresh.access_token)
+            user.refresh = str(refresh)
+            return user
+        except IntegrityError:
+            raise rest_serializers.ValidationError({user_constants.ErrorMessages.EMAIL_EXISTS})
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
+class UserSerializer(rest_serializers.ModelSerializer):
     """
-    Serializer for retrieving user profile information.
-
-    Used to return non-sensitive user details such as
-    name, email, and phone number.
+    Serializer for user profile retrieval and updates with
+    email as a read-only field.
     """
 
     class Meta:
+        """
+        Meta options for UserSerializer.
+        """
+
         model = User
-        fields = ["name", "email", "phone_number", "profile_picture"]
-        read_only_fields = fields
-
-
-class ProfileUpdateSerializer(serializers.ModelSerializer):
-    """
-    Serializer for updating user profile details.
-
-    Allows partial updates to user attributes such as
-    name and phone number.
-    """
+        fields = ["name", "email", "phone_number", "profile_picture", "city"]
+        read_only_fields = ["email"]
 
     def to_internal_value(self, data):
+        """
+        Strictly enforces the defined field set.
+        Raises:
+            ValidationError: If fields not present in the serializer are provided.
+        """
         unknown_fields = set(data.keys()) - set(self.fields.keys())
         if unknown_fields:
-            raise serializers.ValidationError(
-                dict.fromkeys(unknown_fields, "This field is not allowed")
+            raise rest_serializers.ValidationError(
+                {field: user_constants.ErrorMessages.FIELD_NOT_ALLOWED for field in unknown_fields}
             )
         return super().to_internal_value(data)
-
-    class Meta:
-        model = User
-        fields = ["name", "phone_number", "profile_picture"]
 
 
 class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
-    Serializer for TokenObtainPairView to normalize the email
-    by overiding validate method
+    Custom Token serializer for JWT-based authentication.
+
+    Extends the standard SimpleJWT TokenObtainPairSerializer to ensure
+    that email casing does not prevent a successful login.
     """
 
-    def validate(self, attrs):
-        attrs["email"] = attrs["email"].lower()
-        return super().validate(attrs)
+    def to_internal_value(self, data):
+        """
+        Normalize the email address before any validation occurs.
+        """
+        resource_data = data.copy()
 
+        if "email" in resource_data:
+            resource_data["email"] = resource_data["email"].lower().strip()
 
-class CinemaSerializer(serializers.ModelSerializer):
-    """
-    Serializer for listing cinema information.
-    """
-
-    city = serializers.SlugRelatedField(read_only=True, slug_field="name")
-
-    class Meta:
-        model = Cinema
-        fields = ["name", "city", "address"]
-
-
-class SlotSerializer(serializers.ModelSerializer):
-    """
-    Serializer for a movie screening slot.
-
-    Includes nested movie and cinema information along with
-    the slot start time.
-    """
-
-    cinema = CinemaSerializer()
-    movie = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    language = serializers.SlugRelatedField(read_only=True, slug_field="name")
-
-    class Meta:
-        model = Slot
-        fields = ["movie", "cinema", "start_time", "language"]
-
-
-class BookingHistorySerializer(serializers.ModelSerializer):
-    """
-    Serializer for booking history records.
-
-    Represents a booking with its associated slot details
-    and current booking status.
-    """
-
-    slot = SlotSerializer()
-    seats = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Booking
-        fields = ["id", "slot", "status", "seats"]
-
-    def get_seats(self, booking):
-        return TicketSerializer(booking.tickets_by_booking.all(), many=True).data
-
-
-class BookingCancelSerializer(serializers.ModelSerializer):
-    """
-    Serializer to handle booking cancellation.
-
-    This serializer does not accept any writable fields.
-    It only updates the booking status to CANCELLED
-    after validating the current booking state.
-    """
-
-    class Meta:
-        model = Booking
-        fields = ["id", "status"]
-
-    def validate(self, attrs):
-        booking = self.instance
-
-        if booking.status == Booking.BookingStatus.CANCELLED:
-            raise serializers.ValidationError(
-                {"detail": "Booking is already cancelled."}
-            )
-
-        if booking.slot.start_time <= timezone.now():
-            raise serializers.ValidationError(
-                {"detail": "Cannot cancel booking for past or ongoing show."}
-            )
-
-        return attrs
-
-    def update(self, instance, validated_data):
-        instance.status = Booking.BookingStatus.CANCELLED
-        instance.save()
-        return instance
+        return super().to_internal_value(resource_data)

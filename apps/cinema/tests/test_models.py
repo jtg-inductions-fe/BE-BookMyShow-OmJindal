@@ -1,8 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from apps.cinema.models import Cinema
 from apps.base.tests.utils import BaseTestUtils
+from apps.cinema.models import Cinema
 
 
 class CinemaModelTests(BaseTestUtils):

@@ -1,8 +1,8 @@
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
 
-from apps.slot.models import Slot, Booking, Ticket
 from apps.base.tests.utils import BaseTestUtils
+from apps.slot.models import Booking, Slot, Ticket
 
 
 class SlotModelTests(BaseTestUtils):
@@ -63,7 +63,7 @@ class SlotModelTests(BaseTestUtils):
         slot = Slot(
             **{**self.slot, "start_time": "abc"},
             cinema=self.cinema_object,
-            movie=self.movie_object
+            movie=self.movie_object,
         )
 
         with self.assertRaises(ValidationError):
@@ -76,7 +76,7 @@ class SlotModelTests(BaseTestUtils):
         slot = Slot(
             **{**self.slot, "end_time": "abc"},
             cinema=self.cinema_object,
-            movie=self.movie_object
+            movie=self.movie_object,
         )
 
         with self.assertRaises(ValidationError):
@@ -89,7 +89,7 @@ class SlotModelTests(BaseTestUtils):
         slot = Slot(
             **{**self.slot, "price": -100},
             cinema=self.cinema_object,
-            movie=self.movie_object
+            movie=self.movie_object,
         )
 
         with self.assertRaises(ValidationError):
@@ -203,9 +203,7 @@ class TicketModelTests(BaseTestUtils):
         """
         Ticket should be invalid when seat_column is negative
         """
-        ticket = Ticket(
-            booking=self.booking_object, **{**self.ticket, "seat_column": -1}
-        )
+        ticket = Ticket(booking=self.booking_object, **{**self.ticket, "seat_column": -1})
 
         with self.assertRaises(ValidationError):
             ticket.full_clean()
@@ -223,9 +221,7 @@ class TicketModelTests(BaseTestUtils):
         """
         Ticket should be invalid when seat_column exceeds cinema seats_per_row capacity
         """
-        ticket = Ticket(
-            booking=self.booking_object, **{**self.ticket, "seat_column": 51}
-        )
+        ticket = Ticket(booking=self.booking_object, **{**self.ticket, "seat_column": 51})
 
         with self.assertRaises(ValidationError):
             ticket.full_clean()
