@@ -27,5 +27,4 @@ class ErrorMessages:
     SUPERUSER_STAFF_REQUIRED = "Superuser must have is_staff=True."
     SUPERUSER_REQUIRED = "Superuser must have is_superuser=True."
 
-    EMAIL_EXISTS = "A user with this email already exists."
     PASSWORD_MISMATCH = "Passwords do not match."
