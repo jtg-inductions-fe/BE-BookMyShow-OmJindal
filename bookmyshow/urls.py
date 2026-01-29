@@ -31,8 +31,7 @@ urlpatterns = [
     path("api/", include("apps.base.urls")),
 ]
 
-handler404 = base_utils.CustomException.custom_404_view
+handler404 = base_utils.ErrorHandlers.custom_404_view
 
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
