@@ -1,6 +1,6 @@
 class BaseConstants:
     """
-    Centralized database-related constants for the User app.
+    Centralized database-related constants for the Base app.
     """
 
     CITY_NAME_MAX_LENGTH = 50
@@ -10,7 +10,7 @@ class BaseConstants:
 
 class ErrorMessages:
     """
-    Centralized error message constants for the User app.
+    Centralized error message constants for the Base app.
     """
 
     NOT_FOUND = "The requested resource was not found"

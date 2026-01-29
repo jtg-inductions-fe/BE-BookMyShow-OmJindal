@@ -1,6 +1,7 @@
 from django.db import models as db_models
 
 from apps.base import constants as base_constants
+from apps.base import utils as base_utils
 
 
 class TimeStampedModel(db_models.Model):
@@ -27,7 +28,7 @@ class TimeStampedModel(db_models.Model):
         abstract = True
 
 
-class City(TimeStampedModel):
+class City(base_utils.NormalizedNameMixin, TimeStampedModel):
     """
     Represents a city in which the cinema is located. (e.g., Mumbai, Delhi).
 
@@ -46,15 +47,8 @@ class City(TimeStampedModel):
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        """
-        Normalizes the city name to lowercase before saving.
-        """
-        self.name = self.name.lower().strip()
-        super().save(*args, **kwargs)
 
-
-class Genre(TimeStampedModel):
+class Genre(base_utils.NormalizedNameMixin, TimeStampedModel):
     """
     Represents a movie genre (e.g., Action, Sci-Fi, Drama).
 
@@ -72,15 +66,8 @@ class Genre(TimeStampedModel):
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        """
-        Normalizes the genre name to lowercase before saving.
-        """
-        self.name = self.name.lower().strip()
-        super().save(*args, **kwargs)
 
-
-class Language(TimeStampedModel):
+class Language(base_utils.NormalizedNameMixin, TimeStampedModel):
     """
     Represents the language available for a movie (e.g., English, Hindi).
 
@@ -97,10 +84,3 @@ class Language(TimeStampedModel):
 
     def __str__(self):
         return self.name
-
-    def save(self, *args, **kwargs):
-        """
-        Normalizes the language name to lowercase before saving.
-        """
-        self.name = self.name.lower().strip()
-        super().save(*args, **kwargs)

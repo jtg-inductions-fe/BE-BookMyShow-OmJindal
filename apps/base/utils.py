@@ -3,9 +3,9 @@ from django.http import JsonResponse
 from apps.base import constants as base_constants
 
 
-class CustomException:
+class ErrorHandlers:
     """
-    Utility class for handling application-wide exceptions.
+    Utility class for custom HTTP error response handlers.
     """
 
     @staticmethod
@@ -17,3 +17,15 @@ class CustomException:
             {"message": base_constants.ErrorMessages.NOT_FOUND},
             status=404,
         )
+
+
+class NormalizedNameMixin:
+    """
+    Mixin that normalizes the 'name' field to lowercase
+    and strips whitespace.
+    """
+
+    def save(self, *args, **kwargs):
+        if hasattr(self, "name") and self.name:
+            self.name = self.name.lower().strip()
+        return super().save(*args, **kwargs)

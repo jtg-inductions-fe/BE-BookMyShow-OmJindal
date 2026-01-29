@@ -7,7 +7,7 @@ from apps.base import serializers as base_serializers
 
 class LanguageListView(rest_generics.ListAPIView):
     """
-    API view to retrieve a list of all genres.
+    API view to retrieve a list of all languages.
 
     Method: GET
         Parameters: None
@@ -56,7 +56,7 @@ class CityListView(rest_generics.ListAPIView):
     API view to retrieve a list of all cities.
 
     It supports searching cities by name as a search
-    query paramter.
+    query parameter.
 
     Method: GET
         Parameters:
