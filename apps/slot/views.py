@@ -1,46 +1,53 @@
-from django.db.models import Prefetch
-from rest_framework.generics import RetrieveAPIView, CreateAPIView
-from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from rest_framework import generics as rest_generics
 
-from apps.slot.serializers import SlotTicketSerializer, BookingCreateSerializer
-from apps.slot.models import Slot, Booking
+from apps.slot import models as slot_models
+from apps.slot import serializers as slot_serializers
 
 
-class SlotTicketRetrieveView(RetrieveAPIView):
+class SlotDetailView(rest_generics.RetrieveAPIView):
     """
-    API view to retrieve a slot along with its confirmed bookings and tickets.
+    Retrieve API endpoint to fetch detailed slot information along with
+    movie details, cinema layout, and seat availability.
+
+    HTTP Method: (GET)
+        URL Parameters:
+            pk (int): Unique identifier (Primary Key) of the slot.
+        Response:
+            200 OK:
+                Returns a JSON object with basic slot details along with movie,
+                language, cinema layout information and an array of seats containing
+                seat and its availability information.
+                Example:
+                {
+                    "price": int,
+                    "start_time": datetime,
+                    "language": str,
+                    "movie": str,
+                    "cinema": {
+                        "name": str,
+                        "city": str,
+                        "rows": int,
+                        "seats_per_row": int
+                    },
+                    "seats": [
+                        {
+                            "id": int,
+                            "row_number": int,
+                            "seat_number": int,
+                            "is_available": bool
+                        }
+                }
+        Errors:
+            404 Not Found:
+                - No Slot matches the given query.
     """
 
-    serializer_class = SlotTicketSerializer
-    lookup_field = "id"
+    serializer_class = slot_serializers.SlotDetailSerializer
 
     def get_queryset(self):
-
-        return Slot.objects.select_related(
-            "cinema", "movie", "cinema__city"
-        ).prefetch_related(
-            Prefetch(
-                "bookings_by_slot",
-                queryset=Booking.objects.filter(
-                    status=Booking.BookingStatus.CONFIRMED
-                ).prefetch_related("tickets_by_booking"),
-            )
-        )
-
-
-class BookingCreationView(CreateAPIView):
-    """
-    API view to create a booking for a specific slot.
-    """
-
-    serializer_class = BookingCreateSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["slot"] = get_object_or_404(
-            Slot.objects.select_related("cinema"),
-            id=self.kwargs["id"],
-        )
-        return context
+        """
+        Builds a optimized queryset for fetching slot information.
+        """
+        return slot_models.Slot.objects.select_related(
+            "cinema", "movie", "cinema__city", "language"
+        ).prefetch_related("cinema__seats", "cinema__seats__bookings")
