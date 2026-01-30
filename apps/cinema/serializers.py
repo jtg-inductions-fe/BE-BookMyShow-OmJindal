@@ -132,7 +132,21 @@ class CinemaLayoutSerializer(rest_serializers.ModelSerializer):
         fields = ["name", "city", "rows", "seats_per_row"]
 
 
-class SeatAvailabilitySerializer(rest_serializers.ModelSerializer):
+class SeatSerializer(rest_serializers.ModelSerializer):
+    """
+    Serializer for representing individual cinema seats.
+
+    Fields:
+        row_number(int): Row position of the seat in the cinema layout.
+        seat_number(int): Seat position within the row.
+    """
+
+    class Meta:
+        model = cinema_models.Seat
+        fields = ["row_number", "seat_number"]
+
+
+class SeatAvailabilitySerializer(SeatSerializer):
     """
     Serializer for representing individual cinema seats along with
     their availability status for a specific slot.
@@ -145,7 +159,7 @@ class SeatAvailabilitySerializer(rest_serializers.ModelSerializer):
             booking for the requested slot.
 
     Context Requirements:
-        booked_seat_ids (list): Set of seat IDs already booked for that
+        booked_seat_ids (list): Set of seat IDs already booked for
             that particular slot.
     """
 
@@ -153,7 +167,7 @@ class SeatAvailabilitySerializer(rest_serializers.ModelSerializer):
 
     class Meta:
         model = cinema_models.Seat
-        fields = ["id", "row_number", "seat_number", "is_available"]
+        fields = SeatSerializer.Meta.fields + ["id", "is_available"]
 
     def get_is_available(self, seat):
         booked_seat_ids = self.context["booked_seat_ids"]
