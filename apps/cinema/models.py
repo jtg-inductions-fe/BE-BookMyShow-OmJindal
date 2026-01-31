@@ -20,7 +20,9 @@ class Cinema(base_models.TimeStampedModel):
         image (ImageField): Image of the cinema hall.
     """
 
-    name = db_models.CharField(max_length=cinema_constants.CinemaConstants.NAME_MAX_LENGTH)
+    name = db_models.CharField(
+        max_length=cinema_constants.CinemaConstants.NAME_MAX_LENGTH
+    )
     city = db_models.ForeignKey(
         base_models.City, on_delete=db_models.CASCADE, related_name="cinemas"
     )
@@ -45,6 +47,20 @@ class Cinema(base_models.TimeStampedModel):
     def __str__(self):
         return f"{self.name} ({self.city.name})"
 
+    def clean(self):
+        """
+        Prevents modification of cinema seating layout after creation.
+        """
+        if self.pk:
+            original = Cinema.objects.get(pk=self.pk)
+            if (
+                original.rows != self.rows
+                or original.seats_per_row != self.seats_per_row
+            ):
+                raise ValidationError(cinema_constants.ErrorMessages.NOT_ALLOWED)
+
+        super().clean()
+
 
 class Seat(base_models.TimeStampedModel):
     """
@@ -58,7 +74,9 @@ class Seat(base_models.TimeStampedModel):
         seat_number (int): The numeric identifier for the seat in a row.
     """
 
-    cinema = db_models.ForeignKey(Cinema, on_delete=db_models.CASCADE, related_name="seats")
+    cinema = db_models.ForeignKey(
+        Cinema, on_delete=db_models.CASCADE, related_name="seats"
+    )
     row_number = db_models.PositiveSmallIntegerField()
     seat_number = db_models.PositiveSmallIntegerField()
 

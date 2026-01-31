@@ -33,7 +33,7 @@ class User(base_models.TimeStampedModel, AbstractBaseUser, PermissionsMixin):
     """
 
     name = db_models.CharField(
-        max_length=user_constants.UserConstants.NAME_MAX_LENGTH, null=True, blank=True
+        max_length=user_constants.UserConstants.NAME_MAX_LENGTH, blank=True
     )
     email = db_models.EmailField(unique=True)
     phone_number = db_models.CharField(
