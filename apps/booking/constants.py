@@ -26,7 +26,7 @@ class ErrorMessages:
     # Creation Errors
     SLOT_CLOSED = "Booking is closed for this showtime as it has already started or ended."
     EMPTY_SEATS = "Please select at least one seat to proceed with the booking."
-    SEAT_ALREADY_OCCUPIED = "One or more selected seats are already booked for this show."
+    DUPLICATE_SEATS = "Duplicate seats are not allowed for booking"
 
     # Cancellation Errors
     ALREADY_CANCELLED = "This booking has already been cancelled."
