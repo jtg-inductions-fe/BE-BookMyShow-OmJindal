@@ -1,28 +1,40 @@
-from django.db import models
+from django.db import models as db_models
 
-from apps.base.models import Genre, Language, TimeStampedModel
+from apps.base import models as base_models
+from apps.movie import constants as movie_constants
 
 
-class Movie(TimeStampedModel):
+class Movie(base_models.TimeStampedModel):
     """
-        Represents a cinematic film available for booking.
+    Represents a movie model.
 
     Attributes:
-        name (str) : The title of the movie.
-        description (str) : A brief summary of the movie.
-        duration (timedelta) : Total running time of the movie.
-        release_date (date) : The official date the movie was released.
-        genres (ManyToManyField) : The genres associated with the movie.
-        languages (ForeignKey) : The primary language of the movie.
+        name (str): The unique title of the movie.
+        description (str): A brief summary of the movie.
+        duration (timedelta): Total running time (e.g., 02:30:00).
+        release_date (date): The release date of the movie indexed for perfomance.
+        genres (ManyToManyField): Genres associated with the movie.
+        languages (ManyToManyField): Languages associated with the movie.
+        poster (ImageField): Movie poster image.
     """
 
-    name = models.CharField(max_length=125, unique=True)
-    description = models.TextField()
-    duration = models.DurationField(help_text="HH:MM:SS")
-    release_date = models.DateField()
-    genres = models.ManyToManyField(Genre, related_name="movies_by_genre")
-    languages = models.ManyToManyField(Language, related_name="movies_by_language")
-    poster = models.CharField(max_length=255)
+    name = db_models.CharField(
+        max_length=movie_constants.MovieConstants.NAME_MAX_LENGTH,
+        unique=True,
+    )
+    description = db_models.TextField()
+    duration = db_models.DurationField(help_text="Format: HH:MM:SS")
+    release_date = db_models.DateField(db_index=True)
+    genres = db_models.ManyToManyField(base_models.Genre, related_name="movies")
+    languages = db_models.ManyToManyField(base_models.Language, related_name="movies")
+    poster = db_models.ImageField(
+        upload_to=movie_constants.MovieConstants.MOVIE_POSTER_DIR,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["-release_date"]
 
     def __str__(self):
         return self.name
