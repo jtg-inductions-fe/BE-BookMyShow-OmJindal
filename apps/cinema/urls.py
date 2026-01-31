@@ -1,7 +1,7 @@
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
-from apps.cinema.views import CinemaViewSet
+from apps.cinema import views as cinema_views
 
-router = DefaultRouter()
-router.register("", CinemaViewSet, basename="cinemas")
+router = SimpleRouter()
+router.register("", cinema_views.CinemaViewSet, basename="cinemas")
 urlpatterns = router.urls

@@ -1,16 +1,29 @@
 import django_filters
-from apps.cinema.models import Cinema
+
+from apps.cinema import models as cinema_models
+
+
+class NumberInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
+    """
+    Custom filter to allow comma-separated numeric IDs in a query string.
+
+    Example:
+        /api/cinemas/?cities=1,2,3
+    """
+
+    pass
 
 
 class CinemaFilter(django_filters.FilterSet):
     """
     FilterSet for Cinema model.
 
-    Provides filtering for a particular city
+    Attributes:
+        cities (NumberInFilter): Filter by multiple City IDs.
     """
 
-    city = django_filters.NumberFilter(field_name="city__id")
+    cities = NumberInFilter(field_name="city_id", lookup_expr="in")
 
     class Meta:
-        model = Cinema
-        fields = ["city"]
+        model = cinema_models.Cinema
+        fields = ["cities"]
