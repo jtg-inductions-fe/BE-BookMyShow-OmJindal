@@ -32,14 +32,14 @@ class User(base_models.TimeStampedModel, AbstractBaseUser, PermissionsMixin):
         is_active (bool): Boolean flag for user status.
     """
 
-    name = db_models.CharField(
-        max_length=user_constants.UserConstants.NAME_MAX_LENGTH, blank=True
-    )
+    name = db_models.CharField(max_length=user_constants.UserConstants.NAME_MAX_LENGTH, blank=True)
     email = db_models.EmailField(unique=True)
     phone_number = db_models.CharField(
         validators=[phone_number_validator],
         max_length=user_constants.UserConstants.PHONE_NUMBER_MAX_LENGTH,
         blank=True,
+        null=True,
+        unique=True,
     )
     city = db_models.ForeignKey(
         base_models.City,
@@ -61,9 +61,6 @@ class User(base_models.TimeStampedModel, AbstractBaseUser, PermissionsMixin):
 
     # Field used by Django authentication system for authentication.
     USERNAME_FIELD = "email"
-
-    # Fields required when creating a user via createsuperuser command.
-    REQUIRED_FIELDS = ["name", "phone_number"]
 
     def __str__(self):
         return self.email
