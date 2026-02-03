@@ -111,3 +111,50 @@ class CinemaDetailSerializer(CinemaSerializer):
             movie_data["languages"] = list(movie_data["languages"].values())
 
         return list(movie_map.values())
+
+
+class CinemaLayoutSerializer(rest_serializers.ModelSerializer):
+    """
+    Serializer to provide the physical layout of a
+    cinema with basic information.
+
+    Fields:
+        name (str): Name of the cinema.
+        city (str): Name of the city where the cinema is located.
+        rows (int): Total number of seat rows available in the cinema hall.
+        seats_per_row (int): Number of seats present in each row.
+    """
+
+    city = rest_serializers.SlugRelatedField(read_only=True, slug_field="name")
+
+    class Meta:
+        model = cinema_models.Cinema
+        fields = ["name", "city", "rows", "seats_per_row"]
+
+
+class SeatAvailabilitySerializer(rest_serializers.ModelSerializer):
+    """
+    Serializer for representing individual cinema seats along with
+    their availability status for a specific slot.
+
+    Fields:
+        id(int): Unique identifier of the seat.
+        row_number(int): Row position of the seat in the cinema layout.
+        seat_number(int): Seat position within the row.
+        is_available(bool): Indicates whether the seat is available for
+            booking for the requested slot.
+
+    Context Requirements:
+        booked_seat_ids (list): Set of seat IDs already booked for that
+            that particular slot.
+    """
+
+    is_available = rest_serializers.SerializerMethodField()
+
+    class Meta:
+        model = cinema_models.Seat
+        fields = ["id", "row_number", "seat_number", "is_available"]
+
+    def get_is_available(self, seat):
+        booked_seat_ids = self.context["booked_seat_ids"]
+        return seat.id not in booked_seat_ids
